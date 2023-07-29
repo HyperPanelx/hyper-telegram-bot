@@ -1,5 +1,5 @@
 {
-  "name": "api-template",
+  "name": "hyper-telegram-bot",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -16,10 +16,12 @@
     "express": "^4.18.2",
     "express-validator": "^7.0.1",
     "knex": "^2.4.2",
-    "mongoose": "^7.3.1",
+    "mongoose": "^7.4.1",
     "multer": "^1.4.5-lts.1",
     "nanoid": "^3.3.6",
     "node-fetch": "^2.6.12",
-    "nodemon": "^2.0.22"
+    "node-ssh-forward": "^0.7.2",
+    "nodemon": "^2.0.22",
+    "telegraf": "^4.12.2"
   }
 }
