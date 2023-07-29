@@ -1,7 +1,7 @@
 require('dotenv').config()
 const {bot}=require('../bot.config')
 const userModel=require('../models/User')
-let {validateServer,generateCommands,answers,userState,getMe,serverData}=require('../utils')
+let {validateServer,generateCommands,answers,userState,getMe,resetUserData}=require('../utils')
 ///////////
 
 
@@ -63,7 +63,6 @@ bot.command('start', ctx => {
                                     [{text:response[0].server,callback_data: 'select_server'}]
                                 ],
                             }
-
                         })
                 }
             }
@@ -72,7 +71,6 @@ bot.command('start', ctx => {
     })
 
 })
-
 
 bot.on('callback_query', async (callbackQuery) => {
     const query = callbackQuery.update.callback_query.data;
@@ -99,14 +97,6 @@ bot.on('callback_query', async (callbackQuery) => {
 })
 
 
-
-
-const resetUserData = (chatId) => {
-    const userData = userState(chatId)
-    userData.waitingForCity = false
-    userData.waitingForWeather = false
-    userData.waitingForTime = false
-}
 
 bot.on('message',  async (message) =>{
     const chatId=message.chat.id;

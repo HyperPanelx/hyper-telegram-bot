@@ -11,7 +11,14 @@ app.use(bodyParser.json());
 app.use(cors())
 
 //// routes
-const start=require('./routes/start')
+const create=require('./commands/create')
+const del=require('./commands/delete')
+const reset=require('./commands/reset')
+const online=require('./commands/online')
+const generate=require('./commands/generate')
+const unlock=require('./commands/unlock')
+const users=require('./commands/users')
+const start=require('./commands/start')
 
 app.listen(process.env.PORT,()=>{
     console.log(`server is running on port ${process.env.PORT}`)

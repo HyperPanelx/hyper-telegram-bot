@@ -26,6 +26,13 @@ const responseHandler = (error,msg,data) => {
         data:data
     })
 }
+
+const resetUserData = (chatId) => {
+    const userData = userState(chatId)
+    userData.waitingForCity = false
+    userData.waitingForWeather = false
+    userData.waitingForTime = false
+}
 const urlEncode = (obj) => {
   const toArray=Object.entries(obj);
   const url=new URLSearchParams();
@@ -92,7 +99,68 @@ const userState = (chatId) => {
     return userData
 }
 
+const commandValidation =async (callback,chatId,userId) => {
+    const userData=await userModel.findOne({bot_id:userId});
+  if(serverData.ip && serverData.token){
+      callback()
+  }else{
+      await bot.telegram.sendMessage(chatId,
+          `✅ Hello ${userData.firstname}! Welcome to SSH bot management. you have 1 available server!`,
+          {
+              reply_markup: {
+                  inline_keyboard: [
+                      [{text:userData.server,callback_data: 'select_server'}]
+                  ],
+              }
+          })
+  }
+}
+
+const getUsersList = async (ip,token,chatId) => {
+    const port=process.env.API_PORT;
+    try {
+        const request=await f(`http://${ip}:${port}/user-get?username=all`,{
+            headers:{
+                'Authorization':`Bearer ${token}`
+            }
+        })
+        const response=await request.json();
+        if(response.success){
+            return response.data.map(item=>{
+                return  `username:  ${item.user}\npassword:  ${item.passwd}\nmulti:  ${item.multi}\nexdate:  ${item.exdate}\nstatus:  ${item.status}\n<----------------------->\n`
+            }).join('');
+        }else{
+            await bot.telegram.sendMessage(chatId,`❌ error in connecting to api!`)
+        }
+
+    }catch (err) {
+        return  false;
+    }
+}
+
+const getOnlineUsersList = async (ip,token,chatId) => {
+    const port=process.env.API_PORT;
+    try {
+        const request=await f(`http://${ip}:${port}/user-active?server=localhost`,{
+            headers:{
+                'Authorization':`Bearer ${token}`
+            }
+        })
+        const response=await request.json();
+        if(response.users){
+            return response.users.map(item=>{
+                return  `${item}`
+            }).join(', ');
+        }else{
+            await bot.telegram.sendMessage(chatId,`❌ error in connecting to api!`)
+        }
+
+    }catch (err) {
+        return  false;
+    }
+}
+
 module.exports={
     querySerialize,responseHandler,urlEncode,validateServer,generateCommands,states,userState,
-    answers,serverData,getMe
+    answers,serverData,getMe,resetUserData,commandValidation,getUsersList,getOnlineUsersList
 }
