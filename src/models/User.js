@@ -29,6 +29,12 @@ const usersSchema=mongoose.Schema({
         minLength:0,
         maxLength:200
     },
+    referral_token:{
+        type:String,
+        required:false,
+        minLength:0,
+        maxLength:200
+    }
 
 })
 

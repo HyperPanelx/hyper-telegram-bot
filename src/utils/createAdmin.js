@@ -7,7 +7,8 @@ const {serverData} = require("./addServer");
 const createAdminUserStates={};
 const createAdminUserAnswers={
     username:'',
-    pass:''
+    pass:'',
+    role:0
 };
 
 const userCreateAdminState = (chatId) => {
@@ -16,6 +17,7 @@ const userCreateAdminState = (chatId) => {
         userData = {
             waitingForUsername: false,
             waitingForPass: false,
+            waitingForRole: false,
         }
         createAdminUserStates[chatId] = userData
     }
@@ -25,8 +27,10 @@ const createAdminUserData = (chatId) => {
     const userData = userCreateAdminState(chatId)
     userData.waitingForUsername = false
     userData.waitingForPass = false
+    userData.waitingForRole = false
     createAdminUserAnswers.pass=''
     createAdminUserAnswers.username=''
+    createAdminUserAnswers.role=0
 }
 const createAdminProcess = async (chatId,txt,userId) => {
     const createAdminUserStatus=userCreateAdminState(chatId);
@@ -34,9 +38,13 @@ const createAdminProcess = async (chatId,txt,userId) => {
         createAdminUserStatus.waitingForPass=false
         createAdminUserAnswers.username=txt
         await bot.telegram.sendMessage(chatId,'Enter new password:');
-    }else if( createAdminUserAnswers.username && !createAdminUserStatus.waitingForUsername && !createAdminUserStatus.waitingForPass){
+    }else if(createAdminUserStatus.waitingForRole){
+        createAdminUserStatus.waitingForRole=false
         createAdminUserAnswers.pass=txt
-        const isCreated=await createAdmin(serverData.ip,serverData.token,createAdminUserAnswers.username,createAdminUserAnswers.pass);
+        await bot.telegram.sendMessage(chatId,'Enter role:\n0 = full access');
+    }else if( createAdminUserAnswers.username && createAdminUserAnswers.pass && !createAdminUserStatus.waitingForUsername && !createAdminUserStatus.waitingForPass && !createAdminUserStatus.waitingForRole){
+        createAdminUserAnswers.role=txt
+        const isCreated=await createAdmin(serverData.ip,serverData.token,createAdminUserAnswers.username,createAdminUserAnswers.pass,createAdminUserAnswers.role);
         if(isCreated){
             await bot.telegram.sendMessage(chatId,`✅ admin user created successfully!`);
             await generateCommands(chatId,userId);

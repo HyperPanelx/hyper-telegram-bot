@@ -1,4 +1,5 @@
 require('dotenv').config()
+const nanoid=require('nanoid')
 const {bot}=require('../bot.config')
 const userModel=require('../models/User')
 let {generateCommands,getMe}=require('../utils/utils');
@@ -9,6 +10,8 @@ const {unlockUserProcess}=require('../utils/unlockUser');
 const {lockUserProcess}=require('../utils/lockUser');
 const {resetUserPassProcess}=require('../utils/resetPass');
 const {createAdminProcess}=require('../utils/createAdmin');
+const {deleteAdminUserProcess}=require('../utils/deleteAdminUser');
+const {changeMultiProcess}=require('../utils/changeMulti');
 ///////////
 
 bot.command('start', ctx => {
@@ -21,6 +24,7 @@ bot.command('start', ctx => {
             const newUser=new userModel({
                 bot_id:id,
                 firstname:first_name,
+                referral_token:nanoid.nanoid(32),
                 server:'',
                 token:''
             });
@@ -116,6 +120,8 @@ bot.on('message',  async (message) =>{
     await lockUserProcess(chatId,txt,userId);
     await resetUserPassProcess(chatId,txt,userId);
     await createAdminProcess(chatId,txt,userId);
+    await deleteAdminUserProcess(chatId,txt,userId);
+    await changeMultiProcess(chatId,txt,userId);
 });
 
 

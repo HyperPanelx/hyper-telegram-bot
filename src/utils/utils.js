@@ -49,7 +49,13 @@ const getMe = async (ip,token) => {
     const user_data=await userModel.findOne({bot_id:userId});
      serverData.token=user_data.token;
      serverData.ip=user_data.server;
-    await bot.telegram.sendMessage(chatId,`Available operations:\n1- /users - users list\n2- /online - online users\n3- /generate - generate user \n4- /delete - delete user \n5- /unlock - unlock user\n6- /lock - lock user\n7- /reset - reset password\n8- /create - create admin user`)
+    await bot.telegram.sendMessage(chatId,`⚒ Available operations:\n💡 /users - users list\n💡 /online - online users\n💡 /generate - generate user \n💡 /delete - delete user \n💡 /unlock - unlock user\n💡 /lock - lock user\n💡 /reset - reset password\n💡 /create - create admin user\n💡 /delete_admin - delete admin user\n💡 /referral_token - get referral token\n💡 /change_multi -  change user multi`,{
+        reply_markup:{
+            inline_keyboard: [
+                [{text:'switch server',callback_data: 'add_server'}]
+            ],
+        }
+    })
 }
 
 
@@ -214,8 +220,8 @@ const resetPassword = async (ip,token,username,new_pass) => {
     }
 
 }
-const createAdmin = async (ip,token,username,pass) => {
-    const query=querySerialize({username:username,passwd:pass,role:0});
+const createAdmin = async (ip,token,username,pass,role) => {
+    const query=querySerialize({username:username,passwd:pass,role:Number(role)});
     const port=process.env.API_PORT;
     try {
         const request=await f(`http://${ip}:${port}/panel/create/?`+query,{
@@ -232,7 +238,43 @@ const createAdmin = async (ip,token,username,pass) => {
 
 }
 
+const deleteAdminUser = async (ip,token,username) => {
+    const query=querySerialize({username:username})
+    const port=process.env.API_PORT;
+    try {
+        const request=await f(`http://${ip}:${port}/panel/delete/`+query,{
+            headers:{
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${token}`
+            },
+        })
+        const response=await request.json();
+        return !!response.success;
+    }catch (err) {
+        return false
+    }
+
+}
+
+
+const changeMulti=async (ip,token,username,new_multi)=>{
+    const query=querySerialize({username:username,multi:Number(new_multi)})
+    const port=process.env.API_PORT;
+    try {
+        const request=await f(`http://${ip}:${port}/user-change-multi?`+query,{
+            headers:{
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${token}`
+            },
+        })
+        const response=await request.json();
+        return !!response.success;
+    }catch (err) {
+        return false
+    }
+
+}
 
 module.exports={
-    querySerialize,responseHandler,urlEncode,generateCommands,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword,createAdmin
+    querySerialize,responseHandler,urlEncode,generateCommands,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword,createAdmin,deleteAdminUser,changeMulti
 }

@@ -11,6 +11,7 @@ bot.command('create',async (ctx)=>{
     await commandValidation(async ()=>{
         const createAdminData=userCreateAdminState(chatId);
         createAdminData.waitingForPass=true
+        createAdminData.waitingForRole=true
         await bot.telegram.sendMessage(chatId,'Enter username:')
     },chatId,userId)
 
