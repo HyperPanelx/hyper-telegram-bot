@@ -24,8 +24,8 @@ const changeMulti=require('./commands/changeMulti')
 const users=require('./commands/users')
 const start=require('./commands/start')
 
-app.listen(process.env.PORT,()=>{
-    console.log(`server is running on port ${process.env.PORT}`)
+app.listen(process.env.PORT || 3000,()=>{
+    console.log(`server is running on port ${process.env.PORT || 3000}`)
     database.init()
     bot.init()
 })

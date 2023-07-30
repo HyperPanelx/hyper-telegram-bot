@@ -45,7 +45,7 @@ const urlEncode = (obj) => {
     return url
 }
 const validateServer =async (ip,username,password) => {
-    const port=process.env.API_PORT;
+    const port=process.env.API_PORT || 6655;
     const userInfo={
         username,password
     }

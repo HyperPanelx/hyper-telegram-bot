@@ -29,7 +29,7 @@ const urlEncode = (obj) => {
 
 
 const getMe = async (ip,token) => {
-    const port=process.env.API_PORT;
+    const port=process.env.API_PORT || 6655;
     try {
         const getMe=await f(`http://${ip}:${port}/panel/me/`,{
             headers:{
@@ -77,7 +77,7 @@ const commandValidation =async (callback,chatId,userId) => {
 }
 
 const getUsersList = async (ip,token,chatId) => {
-    const port=process.env.API_PORT;
+    const port=process.env.API_PORT || 6655;
     try {
         const request=await f(`http://${ip}:${port}/user-get?username=all`,{
             headers:{
@@ -99,7 +99,7 @@ const getUsersList = async (ip,token,chatId) => {
 }
 
 const getOnlineUsersList = async (ip,token,chatId) => {
-    const port=process.env.API_PORT;
+    const port=process.env.API_PORT || 6655;
     try {
         const request=await f(`http://${ip}:${port}/user-active?server=localhost`,{
             headers:{
@@ -121,7 +121,7 @@ const getOnlineUsersList = async (ip,token,chatId) => {
 };
 
 const generateUser =async (multi,exdate,count,ip,token) => {
-    const port=process.env.API_PORT;
+    const port=process.env.API_PORT || 6655;
     const query=querySerialize({
         multi:Number(multi),
         exdate:exdate,
@@ -151,7 +151,7 @@ const generateUser =async (multi,exdate,count,ip,token) => {
 
 const deleteUser = async (ip,token,username) => {
     const query=querySerialize({username:username,server:'localhost'})
-    const port=process.env.API_PORT;
+    const port=process.env.API_PORT || 6655;
     try {
         const request=await f(`http://${ip}:${port}/user-delete?`+query,{
             headers:{
@@ -169,7 +169,7 @@ const deleteUser = async (ip,token,username) => {
 
 const unlockUser = async (ip,token,username) => {
     const query=querySerialize({status :'unlock',username:username,server:'localhost'})
-    const port=process.env.API_PORT;
+    const port=process.env.API_PORT || 6655;
     try {
         const request=await f(`http://${ip}:${port}/user-change-status?`+query,{
             headers:{
@@ -186,7 +186,7 @@ const unlockUser = async (ip,token,username) => {
 }
 const lockUser = async (ip,token,username) => {
     const query=querySerialize({status :'lock',username:username,server:'localhost'})
-    const port=process.env.API_PORT;
+    const port=process.env.API_PORT || 6655;
     try {
         const request=await f(`http://${ip}:${port}/user-change-status?`+query,{
             headers:{
@@ -205,7 +205,7 @@ const lockUser = async (ip,token,username) => {
 
 const resetPassword = async (ip,token,username,new_pass) => {
     const query=querySerialize({mode:'users',username:username,server:'localhost',passwd:new_pass})
-    const port=process.env.API_PORT;
+    const port=process.env.API_PORT || 6655;
     try {
         const request=await f(`http://${ip}:${port}/user-change-passwd?`+query,{
             headers:{
@@ -222,7 +222,7 @@ const resetPassword = async (ip,token,username,new_pass) => {
 }
 const createAdmin = async (ip,token,username,pass,role) => {
     const query=querySerialize({username:username,passwd:pass,role:Number(role)});
-    const port=process.env.API_PORT;
+    const port=process.env.API_PORT || 6655;
     try {
         const request=await f(`http://${ip}:${port}/panel/create/?`+query,{
             headers:{
@@ -240,7 +240,7 @@ const createAdmin = async (ip,token,username,pass,role) => {
 
 const deleteAdminUser = async (ip,token,username) => {
     const query=querySerialize({username:username})
-    const port=process.env.API_PORT;
+    const port=process.env.API_PORT || 6655;
     try {
         const request=await f(`http://${ip}:${port}/panel/delete/`+query,{
             headers:{
@@ -259,7 +259,7 @@ const deleteAdminUser = async (ip,token,username) => {
 
 const changeMulti=async (ip,token,username,new_multi)=>{
     const query=querySerialize({username:username,multi:Number(new_multi)})
-    const port=process.env.API_PORT;
+    const port=process.env.API_PORT || 6655;
     try {
         const request=await f(`http://${ip}:${port}/user-change-multi?`+query,{
             headers:{
