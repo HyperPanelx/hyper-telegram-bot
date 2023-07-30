@@ -143,10 +143,28 @@ const generateUser =async (multi,exdate,count,ip,token) => {
     }
 }
 
+const deleteUser = async (ip,token,username) => {
+    const query=querySerialize({username:username,server:'localhost'})
+    const port=process.env.API_PORT;
+    try {
+        const request=await f(`http://${ip}:${port}/user-delete?`+query,{
+            headers:{
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${token}`
+            },
+        })
+        const response=await request.json();
+        return !!response.success;
+    }catch (err) {
+        return false
+    }
+
+}
+
 
 
 
 
 module.exports={
-    querySerialize,responseHandler,urlEncode,generateCommands,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser
+    querySerialize,responseHandler,urlEncode,generateCommands,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser
 }

@@ -4,6 +4,7 @@ const userModel=require('../models/User')
 let {generateCommands,getMe}=require('../utils/utils');
 const {userAddServerState,addServerProcess}=require('../utils/addServer');
 const {generateUserProcess}=require('../utils/generateUser');
+const {deleteUserProcess}=require('../utils/deleteUser');
 ///////////
 
 bot.command('start', ctx => {
@@ -104,8 +105,9 @@ bot.on('message',  async (message) =>{
     const chatId=message.chat.id;
     const txt=message.update.message.text;
     const userId=message.update.message.from.id;
-    await addServerProcess(chatId,txt,userId)
-    await generateUserProcess(chatId,txt,userId)
+    await addServerProcess(chatId,txt,userId);
+    await generateUserProcess(chatId,txt,userId);
+    await deleteUserProcess(chatId,txt,userId);
 });
 
 

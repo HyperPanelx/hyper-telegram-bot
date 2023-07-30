@@ -32,6 +32,9 @@ const resetAddServerData = (chatId) => {
     userData.waitingForCity = false
     userData.waitingForWeather = false
     userData.waitingForTime = false
+    addServerAnswers.ip=0
+    addServerAnswers.password=''
+    addServerAnswers.username=''
 }
 const urlEncode = (obj) => {
     const toArray=Object.entries(obj);
@@ -76,15 +79,15 @@ const addServerProcess = async (chatId,txt,userId) => {
         const access_token=await validateServer(addServerAnswers.ip,addServerAnswers.username,addServerAnswers.password);
         if(access_token){
             await bot.telegram.sendMessage(chatId,'✅ Server is valid and authenticated! enter /start to restart bot.');
-            const updateUser=await userModel.findOneAndUpdate({bot_id:userId},{
+            await userModel.findOneAndUpdate({bot_id:userId},{
                 server:addServerAnswers.ip,
                 token:access_token
             })
-            resetAddServerData(chatId)
         }else{
-            await bot.telegram.sendMessage(chatId,'❌ Server is invalid and unavailable! enter /start to restart bot.')
-
+            await bot.telegram.sendMessage(chatId,'❌ Server is invalid and unavailable! enter /start to restart bot.');
         }
+        resetAddServerData(chatId)
+
     }
 }
 

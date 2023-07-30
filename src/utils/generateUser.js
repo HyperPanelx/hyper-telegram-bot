@@ -2,7 +2,6 @@ require('dotenv').config()
 
 //////////////////////
 const {bot} = require("../bot.config");
-const userModel = require("../models/User");
 const {generateUser,generateCommands}=require('./utils')
 const {serverData} = require("./addServer");
 const generateUserStates={};
@@ -29,6 +28,9 @@ const resetGenerateUserData = (chatId) => {
     userData.waitingForMulti = false
     userData.waitingForExdate = false
     userData.waitingForCount = false
+    addGenerateUserAnswers.exdate=0
+    addGenerateUserAnswers.count=0
+    addGenerateUserAnswers.multi=0
 }
 const generateUserProcess = async (chatId,txt,userId) => {
     const generateUserStatus=userGenerateState(chatId);
@@ -41,6 +43,7 @@ const generateUserProcess = async (chatId,txt,userId) => {
         addGenerateUserAnswers.exdate=txt
         await bot.telegram.sendMessage(chatId,'Enter count:')
     }else if(addGenerateUserAnswers.multi && addGenerateUserAnswers.exdate && !generateUserStatus.waitingForCount && !generateUserStatus.waitingForExdate && !generateUserStatus.waitingForMulti){
+
         addGenerateUserAnswers.count=txt;
         const generatedUser=await generateUser(addGenerateUserAnswers.multi,addGenerateUserAnswers.exdate,addGenerateUserAnswers.count,serverData.ip,serverData.token)
         if(generatedUser){
@@ -49,6 +52,8 @@ const generateUserProcess = async (chatId,txt,userId) => {
         }else{
             await bot.telegram.sendMessage(chatId,'❌ operation failed! enter /start to try again!')
         }
+        resetGenerateUserData(chatId)
+
     }
 }
 
