@@ -1,9 +1,10 @@
 require('dotenv').config()
 const {bot}=require('../bot.config')
 const userModel=require('../models/User')
-let {validateServer,generateCommands,answers,userState,getMe,resetUserData}=require('../utils')
+let {generateCommands,getMe}=require('../utils/utils');
+const {userAddServerState,addServerProcess}=require('../utils/addServer');
+const {generateUserProcess}=require('../utils/generateUser');
 ///////////
-
 
 bot.command('start', ctx => {
     const {id,first_name}=ctx.from;
@@ -77,7 +78,8 @@ bot.on('callback_query', async (callbackQuery) => {
     const chatId=callbackQuery.chat.id;
     switch (query) {
         case 'add_server':{
-            const userData=userState(chatId);
+            const userData=userAddServerState(chatId);
+            callbackQuery.state.addServer=true
             userData.waitingForUsername=true
             userData.waitingForPassword=true
             await bot.telegram.sendMessage(chatId,'Enter IP address:')
@@ -101,31 +103,9 @@ bot.on('callback_query', async (callbackQuery) => {
 bot.on('message',  async (message) =>{
     const chatId=message.chat.id;
     const txt=message.update.message.text;
-    const userData=userState(chatId);
-    if(userData && userData.waitingForUsername){
-        userData.waitingForUsername=false
-        answers.ip=txt
-        await bot.telegram.sendMessage(chatId,'Enter admin username:')
-    }else if(userData.waitingForPassword){
-        userData.waitingForPassword=false
-        answers.username=txt
-        await bot.telegram.sendMessage(chatId,'Enter admin password:')
-    }else if(answers.ip && answers.username && !userData.waitingForIP && !userData.waitingForUsername && !userData.waitingForPassword){
-        answers.password=txt;
-        const userId=message.update.message.from.id;
-        const access_token=await validateServer(answers.ip,answers.username,answers.password);
-        if(access_token){
-            await bot.telegram.sendMessage(chatId,'✅ Server is valid and authenticated! /start to restart bot.');
-            const updateUser=await userModel.findOneAndUpdate({bot_id:userId},{
-                server:answers.ip,
-                token:access_token
-            })
-            resetUserData(chatId)
-        }else{
-            await bot.telegram.sendMessage(chatId,'❌ Server is invalid and unavailable! enter /start to restart bot.')
-
-        }
-    }
+    const userId=message.update.message.from.id;
+    await addServerProcess(chatId,txt,userId)
+    await generateUserProcess(chatId,txt,userId)
 });
 
 

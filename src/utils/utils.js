@@ -1,20 +1,9 @@
-const {bot}=require('./bot.config')
+require('dotenv').config()
+const {bot}=require('../bot.config')
 const f = require("node-fetch");
-const userModel=require('./models/User')
-//////////////////////
-const serverData={
-    ip:null,
-    token:null
-}
-const states={};
-const answers={
-    ip:0,
-    username:'',
-    password:''
-};
+const userModel=require('../models/User')
+const {serverData}=require('./addServer')
 
-
-///////////////////////
 const querySerialize = (obj) => {
   return Object.entries(obj).map(([key, val]) => `${key}=${val}`).join('&');
 }
@@ -27,12 +16,7 @@ const responseHandler = (error,msg,data) => {
     })
 }
 
-const resetUserData = (chatId) => {
-    const userData = userState(chatId)
-    userData.waitingForCity = false
-    userData.waitingForWeather = false
-    userData.waitingForTime = false
-}
+
 const urlEncode = (obj) => {
   const toArray=Object.entries(obj);
   const url=new URLSearchParams();
@@ -42,26 +26,7 @@ const urlEncode = (obj) => {
   return url
 }
 
-const validateServer =async (ip,username,password) => {
-    const port=process.env.API_PORT;
-    const userInfo={
-        username,password
-    }
-    try {
-        const sendValidationRequest=await f(`http://${ip}:${port}/token`,{
-            method:'POST',
-            body:urlEncode(userInfo),
-            headers:{
-                'Content-Type':'application/x-www-form-urlencoded'
-            }
-        })
-        const response=await sendValidationRequest.json();
-        const token=response.access_token ? response.access_token : response.data.access_token;
-        return  token ? token : false;
-    }catch (err) {
-        return  false;
-    }
-}
+
 
 const getMe = async (ip,token) => {
     const port=process.env.API_PORT;
@@ -86,18 +51,7 @@ const getMe = async (ip,token) => {
      serverData.ip=user_data.server;
     await bot.telegram.sendMessage(chatId,`Available operations:\n1- /users - users list\n2- /online - online users\n3- /generate - generate user \n4- /delete - delete user \n5- /unlock - unlock user\n6- /reset - reset password\n7- /create - create admin user`)
 }
-const userState = (chatId) => {
-    let userData = states[chatId]
-    if (!userData) {
-        userData = {
-            waitingForIP: false,
-            waitingForUsername: false,
-            waitingForPassword: false,
-        }
-        states[chatId] = userData
-    }
-    return userData
-}
+
 
 const commandValidation =async (callback,chatId,userId) => {
     const userData=await userModel.findOne({bot_id:userId});
@@ -158,9 +112,41 @@ const getOnlineUsersList = async (ip,token,chatId) => {
     }catch (err) {
         return  false;
     }
+};
+
+const generateUser =async (multi,exdate,count,ip,token) => {
+    const port=process.env.API_PORT;
+    const query=querySerialize({
+        multi:Number(multi),
+        exdate:exdate,
+        count:Number(count),
+        server:'localhost',
+    });
+    try {
+        const request=await f(`http://${ip}:${port}/user-gen?`+query,{
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${token}`
+            },
+        })
+        const response=await request.json();
+        if(response.success){
+            return response.data.map(item=>{
+                return  `username: ${item.user}\npassword: ${item.passwd}`
+            }).join('\n<----------------->\n');
+        }else{
+            return false
+        }
+    }catch (err) {
+        return false
+    }
 }
 
+
+
+
+
 module.exports={
-    querySerialize,responseHandler,urlEncode,validateServer,generateCommands,states,userState,
-    answers,serverData,getMe,resetUserData,commandValidation,getUsersList,getOnlineUsersList
+    querySerialize,responseHandler,urlEncode,generateCommands,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser
 }

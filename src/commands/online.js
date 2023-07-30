@@ -1,6 +1,6 @@
 const {bot}=require('../bot.config');
-const {commandValidation,getOnlineUsersList,serverData,generateCommands}=require('../utils')
-
+const {commandValidation,getOnlineUsersList,generateCommands}=require('../utils/utils')
+const {serverData}=require('../utils/addServer')
 
 
 bot.command('online',async (ctx)=>{
