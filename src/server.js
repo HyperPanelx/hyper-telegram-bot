@@ -17,6 +17,7 @@ const reset=require('./commands/reset')
 const online=require('./commands/online')
 const generate=require('./commands/generate')
 const unlock=require('./commands/unlock')
+const lock=require('./commands/lock')
 const users=require('./commands/users')
 const start=require('./commands/start')
 

@@ -8,7 +8,7 @@ const deleteUserData={
 }
 const resetDeleteData = () => {
   deleteUserData.state=false
-  deleteUserData.username=false
+  deleteUserData.username=''
 }
 
 

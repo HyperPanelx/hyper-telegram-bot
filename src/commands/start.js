@@ -5,6 +5,9 @@ let {generateCommands,getMe}=require('../utils/utils');
 const {userAddServerState,addServerProcess}=require('../utils/addServer');
 const {generateUserProcess}=require('../utils/generateUser');
 const {deleteUserProcess}=require('../utils/deleteUser');
+const {unlockUserProcess}=require('../utils/unlockUser');
+const {lockUserProcess}=require('../utils/lockUser');
+const {resetUserPassProcess}=require('../utils/resetPass');
 ///////////
 
 bot.command('start', ctx => {
@@ -108,6 +111,9 @@ bot.on('message',  async (message) =>{
     await addServerProcess(chatId,txt,userId);
     await generateUserProcess(chatId,txt,userId);
     await deleteUserProcess(chatId,txt,userId);
+    await unlockUserProcess(chatId,txt,userId);
+    await lockUserProcess(chatId,txt,userId);
+    await resetUserPassProcess(chatId,txt,userId);
 });
 
 

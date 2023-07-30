@@ -49,7 +49,7 @@ const getMe = async (ip,token) => {
     const user_data=await userModel.findOne({bot_id:userId});
      serverData.token=user_data.token;
      serverData.ip=user_data.server;
-    await bot.telegram.sendMessage(chatId,`Available operations:\n1- /users - users list\n2- /online - online users\n3- /generate - generate user \n4- /delete - delete user \n5- /unlock - unlock user\n6- /reset - reset password\n7- /create - create admin user`)
+    await bot.telegram.sendMessage(chatId,`Available operations:\n1- /users - users list\n2- /online - online users\n3- /generate - generate user \n4- /delete - delete user \n5- /unlock - unlock user\n6- /lock - lock user\n7- /reset - reset password\n8- /create - create admin user`)
 }
 
 
@@ -161,10 +161,60 @@ const deleteUser = async (ip,token,username) => {
 
 }
 
+const unlockUser = async (ip,token,username) => {
+    const query=querySerialize({status :'unlock',username:username,server:'localhost'})
+    const port=process.env.API_PORT;
+    try {
+        const request=await f(`http://${ip}:${port}/user-change-status?`+query,{
+            headers:{
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${token}`
+            },
+        })
+        const response=await request.json();
+        return !!response.success;
+    }catch (err) {
+        return false
+    }
+
+}
+const lockUser = async (ip,token,username) => {
+    const query=querySerialize({status :'lock',username:username,server:'localhost'})
+    const port=process.env.API_PORT;
+    try {
+        const request=await f(`http://${ip}:${port}/user-change-status?`+query,{
+            headers:{
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${token}`
+            },
+        })
+        const response=await request.json();
+        return !!response.success;
+    }catch (err) {
+        return false
+    }
+
+}
 
 
+const resetPassword = async (ip,token,username,new_pass) => {
+    const query=querySerialize({mode:'users',username:username,server:'localhost',passwd:new_pass})
+    const port=process.env.API_PORT;
+    try {
+        const request=await f(`http://${ip}:${port}/user-change-passwd?`+query,{
+            headers:{
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${token}`
+            },
+        })
+        const response=await request.json();
+        return true;
+    }catch (err) {
+        return false
+    }
 
+}
 
 module.exports={
-    querySerialize,responseHandler,urlEncode,generateCommands,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser
+    querySerialize,responseHandler,urlEncode,generateCommands,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword
 }
