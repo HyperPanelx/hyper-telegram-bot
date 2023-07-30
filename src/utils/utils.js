@@ -214,7 +214,25 @@ const resetPassword = async (ip,token,username,new_pass) => {
     }
 
 }
+const createAdmin = async (ip,token,username,pass) => {
+    const query=querySerialize({username:username,passwd:pass,role:0});
+    const port=process.env.API_PORT;
+    try {
+        const request=await f(`http://${ip}:${port}/panel/create/?`+query,{
+            headers:{
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${token}`
+            },
+        })
+        const response=await request.json();
+        return !!response.success;
+    }catch (err) {
+        return false
+    }
+
+}
+
 
 module.exports={
-    querySerialize,responseHandler,urlEncode,generateCommands,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword
+    querySerialize,responseHandler,urlEncode,generateCommands,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword,createAdmin
 }

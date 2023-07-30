@@ -8,6 +8,7 @@ const {deleteUserProcess}=require('../utils/deleteUser');
 const {unlockUserProcess}=require('../utils/unlockUser');
 const {lockUserProcess}=require('../utils/lockUser');
 const {resetUserPassProcess}=require('../utils/resetPass');
+const {createAdminProcess}=require('../utils/createAdmin');
 ///////////
 
 bot.command('start', ctx => {
@@ -114,6 +115,7 @@ bot.on('message',  async (message) =>{
     await unlockUserProcess(chatId,txt,userId);
     await lockUserProcess(chatId,txt,userId);
     await resetUserPassProcess(chatId,txt,userId);
+    await createAdminProcess(chatId,txt,userId);
 });
 
 
