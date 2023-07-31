@@ -1,7 +1,7 @@
 require('dotenv').config()
 const nanoid=require('nanoid')
 const {bot}=require('../bot.config')
-const userModel=require('../models/User')
+const adminModel=require('../models/Admin')
 let {generateCommands,getMe}=require('../utils/utils');
 const {userAddServerState,addServerProcess}=require('../utils/addServer');
 const {generateUserProcess}=require('../utils/generateUser');
@@ -17,17 +17,18 @@ const {addPaypalProcess, addPaypalData}=require('../utils/addPaypal');
 
 bot.command('start', ctx => {
     const {id,first_name}=ctx.from;
-    userModel.
+    adminModel.
     find({bot_id:id}).
     then(async response=>{
         if(response.length===0){
             //// first time
-            const newUser=new userModel({
+            const newUser=new adminModel({
                 bot_id:id,
                 firstname:first_name,
                 referral_token:nanoid.nanoid(32),
                 server:'',
-                token:''
+                token:'',
+                paypal_link:''
             });
             newUser.
             save().

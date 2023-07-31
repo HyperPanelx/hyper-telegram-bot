@@ -1,13 +1,13 @@
 const {bot} = require("../bot.config");
 const {commandValidation} = require("../utils/utils");
 const {addPaypalData}=require('../utils/addPaypal')
-const userModel=require('../models/User')
+const adminModel=require('../models/Admin')
 
 bot.command('add_paypal',async (ctx)=>{
     const userId=ctx.from.id;
     const chatId=ctx.chat.id;
     await commandValidation(async ()=>{
-        const userData=await userModel.findOne({bot_id:userId});
+        const userData=await adminModel.findOne({bot_id:userId});
         if(userData.paypal_link.length>0){
             await bot.telegram.sendMessage(chatId,`✅ You have one available link:\n${userData.paypal_link}`,{
                 reply_markup: {

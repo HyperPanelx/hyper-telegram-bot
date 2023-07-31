@@ -1,6 +1,6 @@
 require('dotenv').config()
 const {bot} = require("../bot.config");
-const userModel = require("../models/User");
+const adminModel = require("../models/Admin");
 const f = require("node-fetch");
 //// server
 const serverData={
@@ -86,7 +86,7 @@ const addServerProcess = async (chatId,txt,userId) => {
         const access_token=await validateServer(addServerAnswers.ip,addServerAnswers.username,addServerAnswers.password,addServerAnswers.port);
         if(access_token){
             await bot.telegram.sendMessage(chatId,'✅ Server is valid and authenticated! enter /start to restart bot.');
-            await userModel.findOneAndUpdate({bot_id:userId},{
+            await adminModel.findOneAndUpdate({bot_id:userId},{
                 server:`${addServerAnswers.ip}:${addServerAnswers.port}`,
                 token:access_token
             })

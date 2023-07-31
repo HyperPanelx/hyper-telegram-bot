@@ -1,7 +1,7 @@
 const mongoose=require('mongoose')
 
 
-const usersSchema=mongoose.Schema({
+const adminSchema=mongoose.Schema({
     firstname:{
         type:String,
         required:true,
@@ -47,7 +47,7 @@ const usersSchema=mongoose.Schema({
 
 
 
-const userModel=mongoose.model('User',usersSchema)
+const adminModel=mongoose.model('admin',adminSchema)
 
 
-module.exports=userModel
+module.exports=adminModel

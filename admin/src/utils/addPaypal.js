@@ -1,4 +1,4 @@
-const userModel=require('../models/User')
+const adminModel=require('../models/Admin')
 const {bot}=require('../bot.config')
 const {generateCommands} = require("./utils");
 
@@ -15,7 +15,7 @@ const resetAddPaypal = () => {
 const addPaypalProcess = async (chatId,txt,userId) => {
   if(addPaypalData.state){
       addPaypalData.link=txt
-        userModel.
+        adminModel.
         findOneAndUpdate({bot_id:userId},{paypal_link:addPaypalData.link}).
         then(async ()=>{
             await bot.telegram.sendMessage(chatId,`✅ link added successfully!`)

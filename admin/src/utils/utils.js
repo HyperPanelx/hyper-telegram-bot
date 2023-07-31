@@ -1,7 +1,7 @@
 require('dotenv').config()
 const {bot}=require('../bot.config')
 const f = require("node-fetch");
-const userModel=require('../models/User')
+const adminModel=require('../models/Admin')
 const {serverData}=require('./addServer')
 
 const querySerialize = (obj) => {
@@ -45,7 +45,7 @@ const getMe = async (ip,token) => {
 
 
  const generateCommands = async (chatId,userId) => {
-    const user_data=await userModel.findOne({bot_id:userId});
+    const user_data=await adminModel.findOne({bot_id:userId});
      serverData.token=user_data.token;
      serverData.ip=user_data.server;
     await bot.telegram.sendMessage(chatId,`⚒ Available operations:\n💡 /users - users list\n💡 /online - online users\n💡 /generate - generate user \n💡 /delete - delete user \n💡 /unlock - unlock user\n💡 /lock - lock user\n💡 /reset - reset password\n💡 /create - create admin user\n💡 /delete_admin - delete admin user\n💡 /referral_token - get referral token\n💡 /change_multi -  change user multi\n💡 /add_paypal -  add your paypal link`,{
@@ -59,7 +59,7 @@ const getMe = async (ip,token) => {
 
 
 const commandValidation =async (callback,chatId,userId) => {
-    const userData=await userModel.findOne({bot_id:userId});
+    const userData=await adminModel.findOne({bot_id:userId});
   if(serverData.ip && serverData.token){
       callback()
   }else{
