@@ -91,6 +91,7 @@ bot.on('callback_query', async (callbackQuery) => {
             callbackQuery.state.addServer=true
             userData.waitingForUsername=true
             userData.waitingForPassword=true
+            userData.waitingForPort=true
             await bot.telegram.sendMessage(chatId,'Enter IP address:')
         }
         break

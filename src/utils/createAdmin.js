@@ -23,7 +23,7 @@ const userCreateAdminState = (chatId) => {
     }
     return userData
 }
-const createAdminUserData = (chatId) => {
+const resetCreateAdminUserData = (chatId) => {
     const userData = userCreateAdminState(chatId)
     userData.waitingForUsername = false
     userData.waitingForPass = false
@@ -51,7 +51,7 @@ const createAdminProcess = async (chatId,txt,userId) => {
         }else{
             await bot.telegram.sendMessage(chatId,'❌ operation failed! enter /start to try again!');
         }
-        createAdminUserData()
+        resetCreateAdminUserData()
     }
 }
 

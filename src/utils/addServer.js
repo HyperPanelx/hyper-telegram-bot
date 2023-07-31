@@ -11,7 +11,8 @@ const addServerStates={};
 const addServerAnswers={
     ip:0,
     username:'',
-    password:''
+    password:'',
+    port:''
 };
 
 const userAddServerState = (chatId) => {
@@ -21,6 +22,7 @@ const userAddServerState = (chatId) => {
             waitingForIP: false,
             waitingForUsername: false,
             waitingForPassword: false,
+            waitingForPort: false,
         }
         addServerStates[chatId] = userData
     }
@@ -29,12 +31,14 @@ const userAddServerState = (chatId) => {
 
 const resetAddServerData = (chatId) => {
     const userData = userAddServerState(chatId)
-    userData.waitingForCity = false
-    userData.waitingForWeather = false
-    userData.waitingForTime = false
+    userData.waitingForIP = false
+    userData.waitingForUsername = false
+    userData.waitingForPassword = false
+    userData.waitingForPort = false
     addServerAnswers.ip=0
     addServerAnswers.password=''
     addServerAnswers.username=''
+    addServerAnswers.port=''
 }
 const urlEncode = (obj) => {
     const toArray=Object.entries(obj);
@@ -44,8 +48,7 @@ const urlEncode = (obj) => {
     })
     return url
 }
-const validateServer =async (ip,username,password) => {
-    const port=process.env.API_PORT || 6655;
+const validateServer =async (ip,username,password,port) => {
     const userInfo={
         username,password
     }
@@ -74,20 +77,23 @@ const addServerProcess = async (chatId,txt,userId) => {
         addServerStatus.waitingForPassword=false
         addServerAnswers.username=txt
         await bot.telegram.sendMessage(chatId,'Enter admin password:')
-    }else if(addServerAnswers.ip && addServerAnswers.username && !addServerStatus.waitingForIP && !addServerStatus.waitingForUsername && !addServerStatus.waitingForPassword){
-        addServerAnswers.password=txt;
-        const access_token=await validateServer(addServerAnswers.ip,addServerAnswers.username,addServerAnswers.password);
+    }else if(addServerStatus.waitingForPort){
+        addServerAnswers.password=txt
+        addServerStatus.waitingForPort=false
+        await bot.telegram.sendMessage(chatId,'Enter Api port:\n⚠️Note: if you dont know the port enter 6655, otherwise enter port')
+    } else if(addServerAnswers.ip && addServerAnswers.username && addServerAnswers.password && !addServerStatus.waitingForIP && !addServerStatus.waitingForUsername && !addServerStatus.waitingForPassword && !addServerStatus.waitingForPort){
+        addServerAnswers.port=txt;
+        const access_token=await validateServer(addServerAnswers.ip,addServerAnswers.username,addServerAnswers.password,addServerAnswers.port);
         if(access_token){
             await bot.telegram.sendMessage(chatId,'✅ Server is valid and authenticated! enter /start to restart bot.');
             await userModel.findOneAndUpdate({bot_id:userId},{
-                server:addServerAnswers.ip,
+                server:`${addServerAnswers.ip}:${addServerAnswers.port}`,
                 token:access_token
             })
         }else{
             await bot.telegram.sendMessage(chatId,'❌ Server is invalid and unavailable! enter /start to restart bot.');
         }
         resetAddServerData(chatId)
-
     }
 }
 
