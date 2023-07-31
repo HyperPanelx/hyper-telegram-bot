@@ -1,0 +1,10 @@
+module.exports={
+    apps:[
+        {
+            name:'hyper-telegram-admin-bot',
+            port:'5002',
+            exec_mode:'fork',
+            script:'./src/server.js'
+        }
+    ]
+}
