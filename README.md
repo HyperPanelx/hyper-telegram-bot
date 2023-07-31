@@ -46,8 +46,6 @@ pnpm install
 | `DB_P_URL` | `string` | **Required** mongodb url in production (when PRODUCTION=1)  | undefined
 | `DB_NAME` | `string` | **Required** mongodb database name                          | undefined
 | `BOT_TOKEN` | `string` | **Required** bot token                                      | undefined
-| `API_PORT` | `string` | **Optional** api port running in hyper apps                 | 6655
-
 ## Running Server
 
 Start the server on `http://localhost:3000`
