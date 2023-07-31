@@ -48,7 +48,7 @@ const getMe = async (ip,token) => {
     const user_data=await userModel.findOne({bot_id:userId});
      serverData.token=user_data.token;
      serverData.ip=user_data.server;
-    await bot.telegram.sendMessage(chatId,`⚒ Available operations:\n💡 /users - users list\n💡 /online - online users\n💡 /generate - generate user \n💡 /delete - delete user \n💡 /unlock - unlock user\n💡 /lock - lock user\n💡 /reset - reset password\n💡 /create - create admin user\n💡 /delete_admin - delete admin user\n💡 /referral_token - get referral token\n💡 /change_multi -  change user multi`,{
+    await bot.telegram.sendMessage(chatId,`⚒ Available operations:\n💡 /users - users list\n💡 /online - online users\n💡 /generate - generate user \n💡 /delete - delete user \n💡 /unlock - unlock user\n💡 /lock - lock user\n💡 /reset - reset password\n💡 /create - create admin user\n💡 /delete_admin - delete admin user\n💡 /referral_token - get referral token\n💡 /change_multi -  change user multi\n💡 /add_paypal -  add your paypal link`,{
         reply_markup:{
             inline_keyboard: [
                 [{text:'switch server',callback_data: 'add_server'}]

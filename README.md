@@ -19,6 +19,7 @@
 /delete_admin - delete admin user
 /referral_token - get referral token
 /change_multi -  change user multi
+/add_paypal -  add your paypal link
 ```
 
 ## Setup for developing project

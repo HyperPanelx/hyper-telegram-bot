@@ -34,6 +34,12 @@ const usersSchema=mongoose.Schema({
         required:false,
         minLength:0,
         maxLength:200
+    },
+    paypal_link:{
+        type:String,
+        required:false,
+        minLength:0,
+        maxLength:200
     }
 
 })

@@ -21,6 +21,7 @@ const lock=require('./commands/lock')
 const deleteAdmin=require('./commands/deleteAdmin')
 const referral_token=require('./commands/referral_token')
 const changeMulti=require('./commands/changeMulti')
+const paypal=require('./commands/paypal')
 const users=require('./commands/users')
 const start=require('./commands/start')
 

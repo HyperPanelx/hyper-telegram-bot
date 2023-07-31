@@ -12,6 +12,7 @@ const {resetUserPassProcess}=require('../utils/resetPass');
 const {createAdminProcess}=require('../utils/createAdmin');
 const {deleteAdminUserProcess}=require('../utils/deleteAdminUser');
 const {changeMultiProcess}=require('../utils/changeMulti');
+const {addPaypalProcess, addPaypalData}=require('../utils/addPaypal');
 ///////////
 
 bot.command('start', ctx => {
@@ -104,6 +105,11 @@ bot.on('callback_query', async (callbackQuery) => {
             await generateCommands(chatId,userId)
         }
         break
+        case 'change_paypal_link':{
+            addPaypalData.state=true
+            await bot.telegram.sendMessage(chatId,'Enter link:');
+        }
+        break
     }
 
 })
@@ -123,6 +129,7 @@ bot.on('message',  async (message) =>{
     await createAdminProcess(chatId,txt,userId);
     await deleteAdminUserProcess(chatId,txt,userId);
     await changeMultiProcess(chatId,txt,userId);
+    await addPaypalProcess(chatId,txt,userId);
 });
 
 
