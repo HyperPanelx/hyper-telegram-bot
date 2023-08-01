@@ -63,10 +63,14 @@ const addServerProcess = async (ctx,txt) => {
         const access_token=await validateServer(fourAnswers.first,fourAnswers.second,fourAnswers.third,fourAnswers.fourth);
         if(access_token){
             await ctx.reply('✅ Server is valid and authenticated! enter /start to restart bot.');
+            const adminData=await adminModel.findOne({bot_id:ctx.from.id});
             await adminModel.findOneAndUpdate({bot_id:ctx.from.id},{
-                server:`${fourAnswers.first}:${fourAnswers.fourth}`,
-                token:access_token
-            });
+                server: [
+                    ...adminData.server,
+                    {ip:`${fourAnswers.first}:${fourAnswers.fourth}`,token:access_token}
+                ]
+               },
+            );
         }else{
             await ctx.reply('❌ Server is invalid and unavailable! enter /start to restart bot.');
         }

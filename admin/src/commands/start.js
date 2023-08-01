@@ -3,9 +3,9 @@ const nanoid=require('nanoid')
 const {bot}=require('../bot.config')
 const adminModel=require('../models/Admin')
 const {fourQuestion,threeQuestion,twoQuestion,oneQuestion,resetAllStates}=require('../utils/states');
-const {resetAllAnswers}=require('../utils/answers')
-let {generateCommands,getMe}=require('../utils/utils');
-const {addServerProcess}=require('../utils/addServer');
+const {resetAllAnswers, threeAnswers}=require('../utils/answers')
+const {generateCommands,getMe}=require('../utils/utils');
+const {addServerProcess, serverData}=require('../utils/addServer');
 const {generateUserProcess}=require('../utils/generateUser');
 const {deleteUserProcess}=require('../utils/deleteUser');
 const {unlockUserProcess}=require('../utils/unlockUser');
@@ -16,6 +16,7 @@ const {deleteAdminUserProcess}=require('../utils/deleteAdminUser');
 const {changeMultiProcess}=require('../utils/changeMulti');
 const {addPaypalProcess}=require('../utils/addPaypal');
 const {getIPProcess}=require('../utils/getIP');
+const {startAuthProcess}=require('../utils/startAuth');
 ///////////
 
 bot.command('start', ctx => {
@@ -31,8 +32,7 @@ bot.command('start', ctx => {
                 bot_id:id,
                 firstname:first_name,
                 referral_token:nanoid.nanoid(32),
-                server:'',
-                token:'',
+                server:[],
                 paypal_link:''
             });
             newUser.
@@ -60,28 +60,20 @@ bot.command('start', ctx => {
                        ],
                    },
                })
-
             }else{
-                const isTokenValid=await getMe(response[0].server,response[0].token)
-                if(!isTokenValid){
-                    ctx.reply(`🚫 ${response[0].server} server need to be authenticated again.`,{
+                const servers_list=response[0].server.map((item)=>{
+                    return [{text:item.ip,callback_data: `select_server-${item.ip}`}]
+                });
+                ctx.reply(
+                    `✅ Hello ${first_name}! Welcome to SSH bot management. you have ${response[0].server.length} available server!`,
+                    {
                         reply_markup: {
                             inline_keyboard: [
-                                [{text:'start authentication',callback_data: 'add_server'}]
+                                ...servers_list,
+                                [{text:'add server',callback_data: 'add_server'}],
                             ],
                         }
                     })
-                }else{
-                    ctx.reply(
-                        `✅ Hello ${first_name}! Welcome to SSH bot management. you have 1 available server!`,
-                        {
-                            reply_markup: {
-                                inline_keyboard: [
-                                    [{text:response[0].server,callback_data: 'select_server'}]
-                                ],
-                            }
-                        })
-                }
             }
 
         }
@@ -103,9 +95,21 @@ bot.action('cancel_add_server',async (ctx)=>{
     await ctx.reply('😪 Maybe later.')
 })
 
+bot.action('show_servers',async (ctx)=>{
+    const getAdmin=await adminModel.findOne({bot_id:ctx.from.id});
+    const servers_list=getAdmin.server.map((item)=>{
+        return [{text:item.ip,callback_data: `select_server-${item.ip}`}]
+    });
+    ctx.reply(
+        `✅ Available servers:`,
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    ...servers_list,
+                ],
+            }
+        })
 
-bot.action('select_server',async (ctx)=>{
-    await generateCommands(ctx)
 })
 
 bot.action('change_paypal_link',async (ctx)=>{
@@ -113,6 +117,63 @@ bot.action('change_paypal_link',async (ctx)=>{
     oneQuestion.first=true
     await ctx.reply('Enter link:');
 })
+bot.action('show_to_remove_server',async (ctx)=>{
+    const getAdmin=await adminModel.findOne({bot_id:ctx.from.id});
+    const servers_list=getAdmin.server.map((item)=>{
+        return [{text:item.ip,callback_data: `remove_server-${item.ip}`}]
+    });
+    ctx.reply(
+        `❔ Select server to remove:`,
+        {
+            reply_markup: {
+                inline_keyboard: [
+                    ...servers_list,
+                ],
+            }
+        })
+
+})
+
+
+
+bot.on('callback_query',async (ctx)=>{
+    const query=ctx.update.callback_query.data;
+    const getAdminData=await adminModel.findOne({bot_id:ctx.from.id});
+    if(query.includes('select_server')){
+        const server_ip=query.split('-')[1];
+        const token=getAdminData.server.filter(item=>item.ip===server_ip)[0].token;
+        const isTokenValid=await getMe(server_ip,token);
+        if(isTokenValid){
+            serverData.ip=server_ip
+            serverData.token=token
+            await generateCommands(ctx);
+        }else{
+            await ctx.reply(`❌ api token is expired! you should start authentication on ${server_ip} again.`,{
+                reply_markup: {
+                    inline_keyboard: [
+                        [{text:'start authentication',callback_data: `start_authentication-${server_ip}`}],
+                    ],
+                }
+            });
+        }
+    }else if(query.includes('start_authentication')){
+        const server_ip=query.split('-')[1];
+        threeQuestion.key='start_authentication'
+        threeQuestion.third=true
+        threeAnswers.first=server_ip
+        ctx.reply('Enter admin username:')
+    }else if(query.includes('remove_server')){
+        const server_ip=query.split('-')[1];
+        const adminServers=[...getAdminData.server];
+        const filterServers=adminServers.filter(item=>item.ip!==server_ip);
+        await adminModel.findOneAndUpdate({bot_id:ctx.from.id},{server:filterServers});
+        serverData.ip=''
+        serverData.token=''
+        ctx.reply('✅ server removed successfully! enter /start to continue.')
+    }
+})
+
+
 
 
 
@@ -129,6 +190,7 @@ bot.on('message',  async (ctx) =>{
     twoQuestion.key==='change_multi' && await changeMultiProcess(ctx,txt);
     oneQuestion.key==='add_paypal' && await addPaypalProcess(ctx,txt);
     oneQuestion.key==='get_ip' && await getIPProcess(ctx,txt);
+    threeQuestion.key==='start_authentication' && await startAuthProcess(ctx,txt);
 });
 
 

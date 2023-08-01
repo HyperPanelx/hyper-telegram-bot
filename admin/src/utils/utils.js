@@ -47,13 +47,12 @@ const getMe = async (ip,token) => {
 
 
  const generateCommands = async (ctx) => {
-    const user_data=await adminModel.findOne({bot_id:ctx.from.id});
-     serverData.token=user_data.token;
-     serverData.ip=user_data.server;
-    await ctx.reply(`⚒ Available operations:\n💡 /users - users list\n💡 /online - online users\n💡 /generate - generate user \n💡 /delete - delete user \n💡 /get_ip - get user connections ip \n💡 /unlock - unlock user\n💡 /lock - lock user\n💡 /reset - reset password\n💡 /create - create admin user\n💡 /delete_admin - delete admin user\n💡 /referral_token - get referral token\n💡 /change_multi -  change user multi\n💡 /add_paypal -  add your paypal link`,{
+    await ctx.reply(`⚒ Available operations on ${serverData.ip}:\n💡 /users - users list\n💡 /online - online users\n💡 /generate - generate user \n💡 /delete - delete user \n💡 /get_ip - get user connections ip \n💡 /unlock - unlock user\n💡 /lock - lock user\n💡 /reset - reset password\n💡 /create - create admin user\n💡 /delete_admin - delete admin user\n💡 /referral_token - get referral token\n💡 /change_multi -  change user multi\n💡 /add_paypal -  add your paypal link`,{
         reply_markup:{
             inline_keyboard: [
-                [{text:'switch server',callback_data: 'add_server'}]
+                [{text:'add server',callback_data: 'add_server'}],
+                [{text:'servers list',callback_data: 'show_servers'}],
+                [{text:'remove server',callback_data: 'show_to_remove_server'}],
             ],
         }
     })
@@ -61,18 +60,22 @@ const getMe = async (ip,token) => {
 
 
 const commandValidation =async (callback,ctx) => {
-    const userData=await adminModel.findOne({bot_id:ctx.from.id});
+    const adminData=await adminModel.findOne({bot_id:ctx.from.id});
   if(serverData.ip && serverData.token){
       resetAllAnswers();
       resetAllStates();
       callback()
   }else{
-      await bot.telegram.sendMessage(ctx.chat.id,
-          `✅ Hello ${userData.firstname}! Welcome to SSH bot management. you have 1 available server!`,
+      const servers_list=adminData.server.map((item)=>{
+          return [{text:item.ip,callback_data: `select_server-${item.ip}`}]
+      });
+      ctx.reply(
+          `✅ Hello ${adminData.firstname}! Welcome to SSH bot management. you have ${adminData.server.length} available server!`,
           {
               reply_markup: {
                   inline_keyboard: [
-                      [{text:userData.server,callback_data: 'select_server'}]
+                      ...servers_list,
+                      [{text:'add server',callback_data: 'add_server'}],
                   ],
               }
           })

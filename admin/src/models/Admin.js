@@ -9,13 +9,6 @@ const adminSchema=mongoose.Schema({
         minLength:1,
         maxLength:200
     },
-    token:{
-        type:String,
-        required:false,
-        trim:true,
-        minLength:0,
-        maxLength:200
-    },
     bot_id:{
         type:String,
         required:true,
@@ -24,10 +17,8 @@ const adminSchema=mongoose.Schema({
         maxLength:200
     },
     server:{
-        type:String,
+        type:Array,
         required:false,
-        minLength:0,
-        maxLength:200
     },
     referral_token:{
         type:String,

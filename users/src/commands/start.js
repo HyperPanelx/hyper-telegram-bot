@@ -19,7 +19,7 @@ bot.command('start', ctx => {
     then(async response=>{
        if(response){
            if(response.referral_token.length>0){
-               await validateToken(response.referral_token);
+               await validateToken(id);
                await bot.telegram.sendMessage(chatId,`✅ Welcome ${first_name} to hyper vpn provider!`,{
                    reply_markup:{
                        inline_keyboard:[
@@ -65,6 +65,7 @@ bot.command('start', ctx => {
 bot.on('callback_query', async (callbackQuery) => {
     const query = callbackQuery.update.callback_query.data;
     const chatId=callbackQuery.chat.id;
+    const userId=callbackQuery.from.id;
     switch (query) {
         case 'add_referral_token':{
             referral_token_state.state=true
@@ -72,7 +73,8 @@ bot.on('callback_query', async (callbackQuery) => {
         }
         break
         case 'select_referral_token':{
-            generateCommands(chatId)
+            await validateToken(userId);
+            await generateCommands(chatId)
         }
         break
     }

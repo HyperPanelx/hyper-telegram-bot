@@ -13,9 +13,9 @@ app.use(cors())
 
 
 
-
-
-
+const buy=require('./commands/buy')
+const accounts=require('./commands/accounts')
+const transactions=require('./commands/transactions')
 const start=require('./commands/start')
 
 app.listen(process.env.PORT || 3000,()=>{
