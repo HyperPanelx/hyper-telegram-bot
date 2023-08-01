@@ -1,55 +1,31 @@
-require('dotenv').config()
-
-//////////////////////
-const {bot} = require("../bot.config");
-const {generateUser,generateCommands,resetPassword}=require('./utils')
+const {generateCommands,resetPassword}=require('./utils')
 const {serverData} = require("./addServer");
-const resetPassUserStates={};
-const resetPassUserAnswers={
-    username:'',
-    new_pass:''
-};
+const {twoQuestion,resetAllStates}=require('./states')
+const {twoAnswers,resetAllAnswers}=require('./answers')
 
-const userResetPassState = (chatId) => {
-    let userData = resetPassUserStates[chatId]
-    if (!userData) {
-        userData = {
-            waitingForUsername: false,
-            waitingForNewPass: false,
-        }
-        resetPassUserStates[chatId] = userData
-    }
-    return userData
-}
-const resetPassUserData = (chatId) => {
-    const userData = userResetPassState(chatId)
-    userData.waitingForUsername = false
-    userData.waitingForNewPass = false
-    resetPassUserAnswers.new_pass=''
-    resetPassUserAnswers.username=''
-}
-const resetUserPassProcess = async (chatId,txt,userId) => {
-    const resetPassUserStatus=userResetPassState(chatId);
 
-    if(resetPassUserStatus && resetPassUserStatus.waitingForNewPass){
-        resetPassUserStatus.waitingForNewPass=false
-        resetPassUserAnswers.username=txt
-        await bot.telegram.sendMessage(chatId,'Enter new password:');
-
-    }else if( resetPassUserAnswers.username && !resetPassUserStatus.waitingForUsername && !resetPassUserStatus.waitingForNewPass){
-        resetPassUserAnswers.new_pass=txt
-        const isPasswordReset=await resetPassword(serverData.ip,serverData.token,resetPassUserAnswers.username,resetPassUserAnswers.new_pass);
+const resetUserPassProcess = async (ctx,txt) => {
+    if(twoQuestion.second){
+        twoQuestion.second=false
+        /// username
+        twoAnswers.first=txt
+        await ctx.reply('Enter new password:');
+    }else if( twoAnswers.first && !twoQuestion.first && !twoQuestion.second){
+        /// new pass
+        twoAnswers.second=txt
+        const isPasswordReset=await resetPassword(serverData.ip,serverData.token,twoAnswers.first,twoAnswers.second);
         if(isPasswordReset){
-            await bot.telegram.sendMessage(chatId,`✅ user's password changed successfully!`)
-            await generateCommands(chatId,userId)
+            await ctx.reply(`✅ user's password changed successfully!`)
+            await generateCommands(ctx)
         }else{
-            await bot.telegram.sendMessage(chatId,'❌ operation failed! enter /start to try again!')
+            await ctx.reply('❌ operation failed! enter /start to try again!')
         }
-        resetPassUserData()
+        resetAllAnswers();
+        resetAllStates();
     }
 }
 
 module.exports={
-    resetUserPassProcess,userResetPassState
+    resetUserPassProcess
 }
 

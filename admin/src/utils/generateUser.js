@@ -1,63 +1,36 @@
-require('dotenv').config()
-
-//////////////////////
-const {bot} = require("../bot.config");
 const {generateUser,generateCommands}=require('./utils')
 const {serverData} = require("./addServer");
-const generateUserStates={};
-const addGenerateUserAnswers={
-    multi:0,
-    exdate:0,
-    count:0
-};
+const {threeQuestion,resetAllStates}=require('../utils/states')
+const {threeAnswers,resetAllAnswers}=require('../utils/answers')
 
-const userGenerateState = (chatId) => {
-    let userData = generateUserStates[chatId]
-    if (!userData) {
-        userData = {
-            waitingForMulti: false,
-            waitingForExdate: false,
-            waitingForCount: false,
-        }
-        generateUserStates[chatId] = userData
-    }
-    return userData
-}
-const resetGenerateUserData = (chatId) => {
-    const userData = userGenerateState(chatId)
-    userData.waitingForMulti = false
-    userData.waitingForExdate = false
-    userData.waitingForCount = false
-    addGenerateUserAnswers.exdate=0
-    addGenerateUserAnswers.count=0
-    addGenerateUserAnswers.multi=0
-}
-const generateUserProcess = async (chatId,txt,userId) => {
-    const generateUserStatus=userGenerateState(chatId);
-    if(generateUserStatus && generateUserStatus.waitingForExdate){
-        generateUserStatus.waitingForExdate=false
-        addGenerateUserAnswers.multi=txt
-        await bot.telegram.sendMessage(chatId,'Enter expiration date (yyyy-mm-dd):');
-    }else if(generateUserStatus.waitingForCount){
-        generateUserStatus.waitingForCount=false
-        addGenerateUserAnswers.exdate=txt
-        await bot.telegram.sendMessage(chatId,'Enter count:')
-    }else if(addGenerateUserAnswers.multi && addGenerateUserAnswers.exdate && !generateUserStatus.waitingForCount && !generateUserStatus.waitingForExdate && !generateUserStatus.waitingForMulti){
 
-        addGenerateUserAnswers.count=txt;
-        const generatedUser=await generateUser(addGenerateUserAnswers.multi,addGenerateUserAnswers.exdate,addGenerateUserAnswers.count,serverData.ip,serverData.token)
+const generateUserProcess = async (ctx,txt) => {
+    if(threeQuestion.second){
+        threeQuestion.second=false
+        //// multi
+        threeAnswers.first=txt
+        await ctx.reply('Enter expiration date (yyyy-mm-dd):');
+    }else if(threeQuestion.third){
+        threeQuestion.third=false
+        //exdate
+        threeAnswers.second=txt
+        await ctx.reply('Enter count:')
+    }else if(threeAnswers.first && threeAnswers.second && !threeQuestion.first && !threeQuestion.second && !threeQuestion.third){
+        /// count
+        threeAnswers.third=txt;
+        const generatedUser=await generateUser(threeAnswers.first,threeAnswers.second,threeAnswers.third,serverData.ip,serverData.token);
         if(generatedUser){
-            await bot.telegram.sendMessage(chatId,`✅ users generated successfully!\n`+generatedUser)
-            await generateCommands(chatId,userId)
+            await ctx.reply(`✅ users generated successfully!\n\n`+generatedUser)
+            await generateCommands(ctx)
         }else{
-            await bot.telegram.sendMessage(chatId,'❌ operation failed! enter /start to try again!')
+            await ctx.reply('❌ operation failed! enter /start to try again!')
         }
-        resetGenerateUserData(chatId)
-
+        resetAllStates();
+        resetAllAnswers();
     }
 }
 
 module.exports={
-    generateUserStates,generateUserProcess,addGenerateUserAnswers,userGenerateState
+    generateUserProcess
 }
 

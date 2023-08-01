@@ -1,45 +1,15 @@
 require('dotenv').config()
-const {bot} = require("../bot.config");
 const adminModel = require("../models/Admin");
+const {fourQuestion,resetAllStates}=require('./states')
+const {fourAnswers,resetAllAnswers}=require('./answers')
 const f = require("node-fetch");
 //// server
 const serverData={
     ip:null,
     token:null
 }
-const addServerStates={};
-const addServerAnswers={
-    ip:0,
-    username:'',
-    password:'',
-    port:''
-};
 
-const userAddServerState = (chatId) => {
-    let userData = addServerStates[chatId]
-    if (!userData) {
-        userData = {
-            waitingForIP: false,
-            waitingForUsername: false,
-            waitingForPassword: false,
-            waitingForPort: false,
-        }
-        addServerStates[chatId] = userData
-    }
-    return userData
-}
 
-const resetAddServerData = (chatId) => {
-    const userData = userAddServerState(chatId)
-    userData.waitingForIP = false
-    userData.waitingForUsername = false
-    userData.waitingForPassword = false
-    userData.waitingForPort = false
-    addServerAnswers.ip=0
-    addServerAnswers.password=''
-    addServerAnswers.username=''
-    addServerAnswers.port=''
-}
 const urlEncode = (obj) => {
     const toArray=Object.entries(obj);
     const url=new URLSearchParams();
@@ -67,36 +37,44 @@ const validateServer =async (ip,username,password,port) => {
         return  false;
     }
 }
-const addServerProcess = async (chatId,txt,userId) => {
-    const addServerStatus=userAddServerState(chatId);
-    if(addServerStatus && addServerStatus.waitingForUsername){
-        addServerStatus.waitingForUsername=false
-        addServerAnswers.ip=txt
-        await bot.telegram.sendMessage(chatId,'Enter admin username:')
-    }else if(addServerStatus.waitingForPassword){
-        addServerStatus.waitingForPassword=false
-        addServerAnswers.username=txt
-        await bot.telegram.sendMessage(chatId,'Enter admin password:')
-    }else if(addServerStatus.waitingForPort){
-        addServerAnswers.password=txt
-        addServerStatus.waitingForPort=false
-        await bot.telegram.sendMessage(chatId,'Enter Api port:\n⚠️Note: if you dont know the port enter 6655, otherwise enter port')
-    } else if(addServerAnswers.ip && addServerAnswers.username && addServerAnswers.password && !addServerStatus.waitingForIP && !addServerStatus.waitingForUsername && !addServerStatus.waitingForPassword && !addServerStatus.waitingForPort){
-        addServerAnswers.port=txt;
-        const access_token=await validateServer(addServerAnswers.ip,addServerAnswers.username,addServerAnswers.password,addServerAnswers.port);
+const addServerProcess = async (ctx,txt) => {
+
+    if(fourQuestion.second){
+        fourQuestion.second=false
+        /// ip
+        fourAnswers.first=txt
+
+        await ctx.reply('Enter admin username:')
+    }else if(fourQuestion.third){
+        fourQuestion.third=false
+        // username
+        fourAnswers.second=txt
+
+        await ctx.reply('Enter admin password:')
+    }else if(fourQuestion.fourth){
+        fourQuestion.fourth=false
+        // password
+        fourAnswers.third=txt
+
+        await ctx.reply('Enter Api port:\n⚠️Note: if you dont know the port enter 6655, otherwise enter port')
+    } else if(fourAnswers.first && fourAnswers.second && fourAnswers.third && !fourQuestion.first && !fourQuestion.second && !fourQuestion.third && !fourQuestion.fourth){
+        /// port
+        fourAnswers.fourth=txt;
+        const access_token=await validateServer(fourAnswers.first,fourAnswers.second,fourAnswers.third,fourAnswers.fourth);
         if(access_token){
-            await bot.telegram.sendMessage(chatId,'✅ Server is valid and authenticated! enter /start to restart bot.');
-            await adminModel.findOneAndUpdate({bot_id:userId},{
-                server:`${addServerAnswers.ip}:${addServerAnswers.port}`,
+            await ctx.reply('✅ Server is valid and authenticated! enter /start to restart bot.');
+            await adminModel.findOneAndUpdate({bot_id:ctx.from.id},{
+                server:`${fourAnswers.first}:${fourAnswers.fourth}`,
                 token:access_token
-            })
+            });
         }else{
-            await bot.telegram.sendMessage(chatId,'❌ Server is invalid and unavailable! enter /start to restart bot.');
+            await ctx.reply('❌ Server is invalid and unavailable! enter /start to restart bot.');
         }
-        resetAddServerData(chatId)
+        resetAllStates()
+        resetAllAnswers()
     }
 }
 
 module.exports={
-    resetAddServerData,addServerStates,serverData,userAddServerState,addServerProcess
+    serverData,addServerProcess
 }

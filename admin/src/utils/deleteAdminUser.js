@@ -1,31 +1,25 @@
 const {deleteAdminUser, generateCommands}=require('./utils')
 const {serverData} = require("./addServer");
-const {bot} = require("../bot.config");
-
-const deleteUserData={
-    state:false,
-    username:''
-}
-const resetDeleteData = () => {
-  deleteUserData.state=false
-  deleteUserData.username=''
-}
+const {oneQuestion,resetAllStates}=require('../utils/states')
+const {oneAnswer,resetAllAnswers}=require('../utils/answers')
 
 
-const deleteAdminUserProcess = async (chatId,txt,userId) => {
-  if(deleteUserData.state){
-      deleteUserData.username=txt
-      const isDeleted=await deleteAdminUser(serverData.ip,serverData.token,deleteUserData.username);
+const deleteAdminUserProcess = async (ctx,txt) => {
+  if(oneQuestion.first){
+      /// username
+      oneAnswer.first=txt
+      const isDeleted=await deleteAdminUser(serverData.ip,serverData.token,oneAnswer.first);
       if(isDeleted){
-          await bot.telegram.sendMessage(chatId,`✅ admin user deleted successfully!`)
-          await generateCommands(chatId,userId)
+          await ctx.reply(`✅ admin user deleted successfully!`)
+          await generateCommands(ctx)
       }else{
-          await bot.telegram.sendMessage(chatId,'❌ operation failed! enter /start to try again!')
+          await ctx.reply('❌ operation failed! enter /start to try again!')
       }
-      resetDeleteData()
+      resetAllAnswers()
+      resetAllStates()
   }
 }
 
 module.exports= {
-    deleteAdminUserProcess,deleteUserData
+    deleteAdminUserProcess
 }

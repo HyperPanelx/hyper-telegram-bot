@@ -6,7 +6,7 @@ const adminSchema=mongoose.Schema({
         type:String,
         required:true,
         trim:true,
-        minLength:3,
+        minLength:1,
         maxLength:200
     },
     token:{

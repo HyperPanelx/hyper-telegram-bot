@@ -1,31 +1,28 @@
 const {unlockUser, generateCommands}=require('./utils')
 const {serverData} = require("./addServer");
-const {bot} = require("../bot.config");
-
-const unlockUserData={
-    state:false,
-    username:''
-}
-const resetUnlockData = () => {
-    unlockUserData.state=false
-    unlockUserData.username=''
-}
+const {oneQuestion,resetAllStates}=require('./states');
+const {oneAnswer,resetAllAnswers}=require('./answers');
 
 
-const unlockUserProcess = async (chatId,txt,userId) => {
-  if(unlockUserData.state){
-      unlockUserData.username=txt
-      const isDeleted=await unlockUser(serverData.ip,serverData.token,unlockUserData.username);
+
+
+
+const unlockUserProcess = async (ctx,txt) => {
+  if(oneQuestion.first){
+      //// username
+      oneAnswer.first=txt
+      const isDeleted=await unlockUser(serverData.ip,serverData.token,oneAnswer.first);
       if(isDeleted){
-          await bot.telegram.sendMessage(chatId,`✅ user unlocked successfully!`)
-          await generateCommands(chatId,userId)
+          await ctx.reply(`✅ user unlocked successfully!`)
+          await generateCommands(ctx)
       }else{
-          await bot.telegram.sendMessage(chatId,'❌ operation failed! enter /start to try again!')
+          await ctx.reply('❌ operation failed! enter /start to try again!')
       }
-      resetUnlockData()
+      resetAllAnswers();
+      resetAllStates();
   }
 }
 
 module.exports= {
-    unlockUserProcess,unlockUserData
+    unlockUserProcess
 }

@@ -1,61 +1,36 @@
-require('dotenv').config()
-
-//////////////////////
-const {bot} = require("../bot.config");
 const {createAdmin,generateCommands}=require('./utils')
 const {serverData} = require("./addServer");
-const createAdminUserStates={};
-const createAdminUserAnswers={
-    username:'',
-    pass:'',
-    role:0
-};
+const {threeQuestion,resetAllStates}=require('./states')
+const {threeAnswers,resetAllAnswers}=require('./answers')
 
-const userCreateAdminState = (chatId) => {
-    let userData = createAdminUserStates[chatId]
-    if (!userData) {
-        userData = {
-            waitingForUsername: false,
-            waitingForPass: false,
-            waitingForRole: false,
-        }
-        createAdminUserStates[chatId] = userData
-    }
-    return userData
-}
-const resetCreateAdminUserData = (chatId) => {
-    const userData = userCreateAdminState(chatId)
-    userData.waitingForUsername = false
-    userData.waitingForPass = false
-    userData.waitingForRole = false
-    createAdminUserAnswers.pass=''
-    createAdminUserAnswers.username=''
-    createAdminUserAnswers.role=0
-}
-const createAdminProcess = async (chatId,txt,userId) => {
-    const createAdminUserStatus=userCreateAdminState(chatId);
-    if(createAdminUserStatus && createAdminUserStatus.waitingForPass){
-        createAdminUserStatus.waitingForPass=false
-        createAdminUserAnswers.username=txt
-        await bot.telegram.sendMessage(chatId,'Enter new password:');
-    }else if(createAdminUserStatus.waitingForRole){
-        createAdminUserStatus.waitingForRole=false
-        createAdminUserAnswers.pass=txt
-        await bot.telegram.sendMessage(chatId,'Enter role:\n0 = full access');
-    }else if( createAdminUserAnswers.username && createAdminUserAnswers.pass && !createAdminUserStatus.waitingForUsername && !createAdminUserStatus.waitingForPass && !createAdminUserStatus.waitingForRole){
-        createAdminUserAnswers.role=txt
-        const isCreated=await createAdmin(serverData.ip,serverData.token,createAdminUserAnswers.username,createAdminUserAnswers.pass,createAdminUserAnswers.role);
+
+const createAdminProcess = async (ctx,txt) => {
+    if(threeQuestion.second){
+        threeQuestion.second=false
+        /// username
+        threeAnswers.first=txt
+        await ctx.reply('Enter new password:');
+    }else if(threeQuestion.third){
+        threeQuestion.third=false
+        /// password
+        threeAnswers.second=txt
+        await ctx.reply('Enter role:\n0 = full access');
+    }else if( threeAnswers.first && threeAnswers.second && !threeQuestion.first && !threeQuestion.second && !threeQuestion.third){
+        /// role
+        threeAnswers.third=txt
+        const isCreated=await createAdmin(serverData.ip,serverData.token,threeAnswers.first,threeAnswers.second,threeAnswers.third);
         if(isCreated){
-            await bot.telegram.sendMessage(chatId,`✅ admin user created successfully!`);
-            await generateCommands(chatId,userId);
+            await ctx.reply(`✅ admin user created successfully!`);
+            await generateCommands(ctx);
         }else{
-            await bot.telegram.sendMessage(chatId,'❌ operation failed! enter /start to try again!');
+            await ctx.reply('❌ operation failed! enter /start to try again!');
         }
-        resetCreateAdminUserData()
+        resetAllAnswers();
+        resetAllStates();
     }
 }
 
 module.exports={
-    createAdminProcess,userCreateAdminState
+    createAdminProcess
 }
 

@@ -1,16 +1,13 @@
 const {bot}=require('../bot.config');
 const {commandValidation}=require('../utils/utils')
-const {deleteUserData} = require("../utils/deleteAdminUser");
-
+const {oneQuestion}=require('../utils/states')
 
 
 
 bot.command('delete_admin',async (ctx)=>{
-    const userId=ctx.from.id;
-    const chatId=ctx.chat.id;
     await commandValidation(async ()=>{
-        deleteUserData.state=true
-        await bot.telegram.sendMessage(chatId,'Enter username:')
-    },chatId,userId)
-
+        oneQuestion.key='delete_admin'
+        oneQuestion.first=true
+        await ctx.reply('Enter username:')
+    },ctx)
 })

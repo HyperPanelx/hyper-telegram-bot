@@ -2,8 +2,10 @@ require('dotenv').config()
 const nanoid=require('nanoid')
 const {bot}=require('../bot.config')
 const adminModel=require('../models/Admin')
+const {fourQuestion,threeQuestion,twoQuestion,oneQuestion,resetAllStates}=require('../utils/states');
+const {resetAllAnswers}=require('../utils/answers')
 let {generateCommands,getMe}=require('../utils/utils');
-const {userAddServerState,addServerProcess}=require('../utils/addServer');
+const {addServerProcess}=require('../utils/addServer');
 const {generateUserProcess}=require('../utils/generateUser');
 const {deleteUserProcess}=require('../utils/deleteUser');
 const {unlockUserProcess}=require('../utils/unlockUser');
@@ -12,10 +14,13 @@ const {resetUserPassProcess}=require('../utils/resetPass');
 const {createAdminProcess}=require('../utils/createAdmin');
 const {deleteAdminUserProcess}=require('../utils/deleteAdminUser');
 const {changeMultiProcess}=require('../utils/changeMulti');
-const {addPaypalProcess, addPaypalData}=require('../utils/addPaypal');
+const {addPaypalProcess}=require('../utils/addPaypal');
+const {getIPProcess}=require('../utils/getIP');
 ///////////
 
 bot.command('start', ctx => {
+    resetAllStates();
+    resetAllAnswers();
     const {id,first_name}=ctx.from;
     adminModel.
     find({bot_id:id}).
@@ -84,53 +89,46 @@ bot.command('start', ctx => {
 
 })
 
-bot.on('callback_query', async (callbackQuery) => {
-    const query = callbackQuery.update.callback_query.data;
-    const chatId=callbackQuery.chat.id;
-    switch (query) {
-        case 'add_server':{
-            const userData=userAddServerState(chatId);
-            callbackQuery.state.addServer=true
-            userData.waitingForUsername=true
-            userData.waitingForPassword=true
-            userData.waitingForPort=true
-            await bot.telegram.sendMessage(chatId,'Enter IP address:')
-        }
-        break
-        case 'cancel_add_server':{
-           await bot.telegram.sendMessage(chatId,'😪 Maybe later.')
-        }
-        break
-        case 'select_server':{
-            const userId=callbackQuery.from.id
-            await generateCommands(chatId,userId)
-        }
-        break
-        case 'change_paypal_link':{
-            addPaypalData.state=true
-            await bot.telegram.sendMessage(chatId,'Enter link:');
-        }
-        break
-    }
 
+
+bot.action('add_server',async (ctx)=>{
+    fourQuestion.key='add_server'
+    fourQuestion.second=true
+    fourQuestion.third=true
+    fourQuestion.fourth=true
+    await ctx.reply('Enter IP address:')
+})
+
+bot.action('cancel_add_server',async (ctx)=>{
+    await ctx.reply('😪 Maybe later.')
+})
+
+
+bot.action('select_server',async (ctx)=>{
+    await generateCommands(ctx)
+})
+
+bot.action('change_paypal_link',async (ctx)=>{
+    oneQuestion.key='add_paypal'
+    oneQuestion.first=true
+    await ctx.reply('Enter link:');
 })
 
 
 
-bot.on('message',  async (message) =>{
-    const chatId=message.chat.id;
-    const txt=message.update.message.text;
-    const userId=message.update.message.from.id;
-    await addServerProcess(chatId,txt,userId);
-    await generateUserProcess(chatId,txt,userId);
-    await deleteUserProcess(chatId,txt,userId);
-    await unlockUserProcess(chatId,txt,userId);
-    await lockUserProcess(chatId,txt,userId);
-    await resetUserPassProcess(chatId,txt,userId);
-    await createAdminProcess(chatId,txt,userId);
-    await deleteAdminUserProcess(chatId,txt,userId);
-    await changeMultiProcess(chatId,txt,userId);
-    await addPaypalProcess(chatId,txt,userId);
+bot.on('message',  async (ctx) =>{
+    const txt=ctx.update.message.text;
+    fourQuestion.key==='add_server' &&  await addServerProcess(ctx,txt);
+    threeQuestion.key==='generate' && await generateUserProcess(ctx,txt);
+    oneQuestion.key==='delete_user' && await deleteUserProcess(ctx,txt);
+    oneQuestion.key==='unlock' && await unlockUserProcess(ctx,txt);
+    oneQuestion.key==='lock' && await lockUserProcess(ctx,txt);
+    twoQuestion.key==='reset_password' && await resetUserPassProcess(ctx,txt);
+    threeQuestion.key==='create_admin' && await createAdminProcess(ctx,txt);
+    oneQuestion.key==='delete_admin' && await deleteAdminUserProcess(ctx,txt);
+    twoQuestion.key==='change_multi' && await changeMultiProcess(ctx,txt);
+    oneQuestion.key==='add_paypal' && await addPaypalProcess(ctx,txt);
+    oneQuestion.key==='get_ip' && await getIPProcess(ctx,txt);
 });
 
 

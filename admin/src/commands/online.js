@@ -4,11 +4,13 @@ const {serverData}=require('../utils/addServer')
 
 
 bot.command('online',async (ctx)=>{
-    const userId=ctx.from.id;
-    const chatId=ctx.chat.id;
     await commandValidation(async ()=>{
-        const onlineUsersList=await getOnlineUsersList(serverData.ip,serverData.token,chatId);
-        await bot.telegram.sendMessage(chatId,'👨🏼‍💻 online users:\n'+onlineUsersList)
-        await generateCommands(chatId,userId)
-    },chatId,userId)
+        const onlineUsersList=await getOnlineUsersList(serverData.ip,serverData.token);
+        if(onlineUsersList){
+            await ctx.reply('✅ online users:\n\n'+onlineUsersList)
+            await generateCommands(ctx);
+        }else{
+            await ctx.reply(`❌ error in connecting to api!`)
+        }
+    },ctx)
 })

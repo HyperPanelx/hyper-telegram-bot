@@ -1,12 +1,12 @@
 const {bot} = require("../bot.config");
 const {commandValidation} = require("../utils/utils");
-const {lockUserData}=require('../utils/lockUser')
+const {oneQuestion}=require('../utils/states')
+
 
 bot.command('lock',async (ctx)=>{
-    const userId=ctx.from.id;
-    const chatId=ctx.chat.id;
     await commandValidation(async ()=>{
-        lockUserData.state=true
-        await bot.telegram.sendMessage(chatId,'Enter username:')
-    },chatId,userId)
+        oneQuestion.key='lock'
+        oneQuestion.first=true
+        await ctx.reply('Enter username:')
+    },ctx)
 })

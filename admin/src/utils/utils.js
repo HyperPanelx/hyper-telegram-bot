@@ -2,6 +2,8 @@ require('dotenv').config()
 const {bot}=require('../bot.config')
 const f = require("node-fetch");
 const adminModel=require('../models/Admin')
+const {resetAllStates}=require('./states')
+const {resetAllAnswers}=require('./answers')
 const {serverData}=require('./addServer')
 
 const querySerialize = (obj) => {
@@ -44,11 +46,11 @@ const getMe = async (ip,token) => {
 
 
 
- const generateCommands = async (chatId,userId) => {
-    const user_data=await adminModel.findOne({bot_id:userId});
+ const generateCommands = async (ctx) => {
+    const user_data=await adminModel.findOne({bot_id:ctx.from.id});
      serverData.token=user_data.token;
      serverData.ip=user_data.server;
-    await bot.telegram.sendMessage(chatId,`⚒ Available operations:\n💡 /users - users list\n💡 /online - online users\n💡 /generate - generate user \n💡 /delete - delete user \n💡 /unlock - unlock user\n💡 /lock - lock user\n💡 /reset - reset password\n💡 /create - create admin user\n💡 /delete_admin - delete admin user\n💡 /referral_token - get referral token\n💡 /change_multi -  change user multi\n💡 /add_paypal -  add your paypal link`,{
+    await ctx.reply(`⚒ Available operations:\n💡 /users - users list\n💡 /online - online users\n💡 /generate - generate user \n💡 /delete - delete user \n💡 /get_ip - get user connections ip \n💡 /unlock - unlock user\n💡 /lock - lock user\n💡 /reset - reset password\n💡 /create - create admin user\n💡 /delete_admin - delete admin user\n💡 /referral_token - get referral token\n💡 /change_multi -  change user multi\n💡 /add_paypal -  add your paypal link`,{
         reply_markup:{
             inline_keyboard: [
                 [{text:'switch server',callback_data: 'add_server'}]
@@ -58,12 +60,14 @@ const getMe = async (ip,token) => {
 }
 
 
-const commandValidation =async (callback,chatId,userId) => {
-    const userData=await adminModel.findOne({bot_id:userId});
+const commandValidation =async (callback,ctx) => {
+    const userData=await adminModel.findOne({bot_id:ctx.from.id});
   if(serverData.ip && serverData.token){
+      resetAllAnswers();
+      resetAllStates();
       callback()
   }else{
-      await bot.telegram.sendMessage(chatId,
+      await bot.telegram.sendMessage(ctx.chat.id,
           `✅ Hello ${userData.firstname}! Welcome to SSH bot management. you have 1 available server!`,
           {
               reply_markup: {
@@ -75,7 +79,7 @@ const commandValidation =async (callback,chatId,userId) => {
   }
 }
 
-const getUsersList = async (ip,token,chatId) => {
+const getUsersList = async (ip,token) => {
     try {
         const request=await f(`http://${ip}/user-get?username=all`,{
             headers:{
@@ -85,10 +89,10 @@ const getUsersList = async (ip,token,chatId) => {
         const response=await request.json();
         if(response.success){
             return response.data.map(item=>{
-                return  `username:  ${item.user}\npassword:  ${item.passwd}\nmulti:  ${item.multi}\nexdate:  ${item.exdate}\nstatus:  ${item.status}\n<----------------------->\n`
+                return  `👨🏼‍💼username:  ${item.user}\npassword:  ${item.passwd}\nmulti:  ${item.multi}\nexdate:  ${item.exdate}\nstatus:  ${item.status}\n<----------------------->\n`
             }).join('');
         }else{
-            await bot.telegram.sendMessage(chatId,`❌ error in connecting to api!`)
+            return false
         }
 
     }catch (err) {
@@ -96,20 +100,21 @@ const getUsersList = async (ip,token,chatId) => {
     }
 }
 
-const getOnlineUsersList = async (ip,token,chatId) => {
+const getOnlineUsersList = async (ip,token) => {
     try {
         const request=await f(`http://${ip}/user-active?server=localhost`,{
             headers:{
                 'Authorization':`Bearer ${token}`
             }
-        })
+        });
         const response=await request.json();
         if(response.users){
-            return response.users.map(item=>{
-                return  `${item}`
-            }).join(', ');
+            const responseEntries=Object.entries(response.users);
+            return responseEntries.map(item=>{
+                return  `👨🏼‍💼 username: ${item[0]}\n📱 connections: ${item[1]}`
+            }).join('\n<--------------------------->\n');
         }else{
-            await bot.telegram.sendMessage(chatId,`❌ error in connecting to api!`)
+            return false
         }
 
     }catch (err) {
@@ -232,7 +237,7 @@ const createAdmin = async (ip,token,username,pass,role) => {
 const deleteAdminUser = async (ip,token,username) => {
     const query=querySerialize({username:username})
     try {
-        const request=await f(`http://${ip}/panel/delete/`+query,{
+        const request=await f(`http://${ip}/panel/delete/?`+query,{
             headers:{
                 'Content-Type':'application/json',
                 Authorization:`Bearer ${token}`
@@ -264,6 +269,28 @@ const changeMulti=async (ip,token,username,new_multi)=>{
 
 }
 
+const getIPRequest=async (ip,token,username,new_multi)=>{
+    const query=querySerialize({username:username,multi:Number(new_multi)})
+    try {
+        const request=await f(`http://${ip}/user-active-ip?`+query,{
+            headers:{
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${token}`
+            },
+        })
+        const response=await request.json();
+        if(response.success){
+            return  response.data[0].client_ip
+        }else{
+            return  false
+        }
+    }catch (err) {
+        return false
+    }
+
+}
+
+
 module.exports={
-    querySerialize,responseHandler,urlEncode,generateCommands,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword,createAdmin,deleteAdminUser,changeMulti
+    querySerialize,responseHandler,urlEncode,generateCommands,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword,createAdmin,deleteAdminUser,changeMulti,getIPRequest
 }

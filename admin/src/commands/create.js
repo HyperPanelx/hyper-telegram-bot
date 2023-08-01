@@ -1,18 +1,15 @@
 const {bot}=require('../bot.config');
 const {commandValidation}=require('../utils/utils')
-const {userGenerateState}=require('../utils/generateUser')
-const {userCreateAdminState}=require('../utils/createAdmin')
+const {threeQuestion}=require('../utils/states')
 
 
 
 bot.command('create',async (ctx)=>{
-    const userId=ctx.from.id;
-    const chatId=ctx.chat.id;
     await commandValidation(async ()=>{
-        const createAdminData=userCreateAdminState(chatId);
-        createAdminData.waitingForPass=true
-        createAdminData.waitingForRole=true
-        await bot.telegram.sendMessage(chatId,'Enter username:')
-    },chatId,userId)
+        threeQuestion.key='create_admin'
+        threeQuestion.second=true
+        threeQuestion.third=true
+        await ctx.reply('Enter username:')
+    },ctx)
 
 })

@@ -1,53 +1,32 @@
-require('dotenv').config()
-
-//////////////////////
-const {bot} = require("../bot.config");
 const {changeMulti,generateCommands}=require('./utils')
 const {serverData} = require("./addServer");
-const changeMultiUserStates={};
-const changeMultiUserAnswers={
-    username:'',
-    new_multi:0
-};
+const {twoQuestion,resetAllStates}=require('./states')
+const {twoAnswers,resetAllAnswers}=require('./answers')
 
-const changeMultiState = (chatId) => {
-    let userData = changeMultiUserStates[chatId]
-    if (!userData) {
-        userData = {
-            waitingForUsername: false,
-            waitingForNewMulti: false,
-        }
-        changeMultiUserStates[chatId] = userData
-    }
-    return userData
-}
-const resetChangeMultiUserData = (chatId) => {
-    const userData = changeMultiState(chatId)
-    userData.waitingForUsername = false
-    userData.waitingForNewMulti = false
-    changeMultiUserAnswers.username=''
-    changeMultiUserAnswers.new_multi=0
-}
-const changeMultiProcess = async (chatId,txt,userId) => {
-    const changeMultiUserStatus=changeMultiState(chatId);
-    if(changeMultiUserStatus && changeMultiUserStatus.waitingForNewMulti){
-        changeMultiUserStatus.waitingForNewMulti=false
-        changeMultiUserAnswers.username=txt
-        await bot.telegram.sendMessage(chatId,'Enter new multi:');
-    }else if( changeMultiUserAnswers.username && !changeMultiUserStatus.waitingForUsername && !changeMultiUserStatus.waitingForNewMulti){
-        changeMultiUserAnswers.new_multi=txt
-        const isCreated=await changeMulti(serverData.ip,serverData.token,changeMultiUserAnswers.username,changeMultiUserAnswers.new_multi);
+
+const changeMultiProcess = async (ctx,txt) => {
+    if(twoQuestion.second){
+        twoQuestion.second=false
+        /// username
+        twoAnswers.first=txt
+        await ctx.reply('Enter new multi:');
+
+    }else if( twoAnswers.first && !twoQuestion.first && !twoQuestion.second){
+        /// new multi
+        twoAnswers.second=txt
+        const isCreated=await changeMulti(serverData.ip,serverData.token,twoAnswers.first,twoAnswers.second);
         if(isCreated){
-            await bot.telegram.sendMessage(chatId,`✅ user multi changed successfully!`);
-            await generateCommands(chatId,userId);
+            await ctx.reply(`✅ user multi changed successfully!`);
+            await generateCommands(ctx);
         }else{
-            await bot.telegram.sendMessage(chatId,'❌ operation failed! enter /start to try again!');
+            await ctx.reply('❌ operation failed! enter /start to try again!');
         }
-        resetChangeMultiUserData()
+        resetAllAnswers();
+        resetAllStates()
     }
 }
 
 module.exports={
-    changeMultiProcess,changeMultiState
+    changeMultiProcess
 }
 

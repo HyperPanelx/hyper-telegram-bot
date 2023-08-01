@@ -1,32 +1,26 @@
 const adminModel=require('../models/Admin')
-const {bot}=require('../bot.config')
 const {generateCommands} = require("./utils");
-
-const addPaypalData={
-    state:false,
-    link:''
-}
-const resetAddPaypal = () => {
-    addPaypalData.state=false
-    addPaypalData.username=''
-}
+const {oneQuestion,resetAllStates}=require('./states')
+const {oneAnswer,resetAllAnswers}=require('./answers')
 
 
-const addPaypalProcess = async (chatId,txt,userId) => {
-  if(addPaypalData.state){
-      addPaypalData.link=txt
+const addPaypalProcess = async (ctx,txt) => {
+  if(oneQuestion.first){
+      /// link
+      oneAnswer.first=txt
         adminModel.
-        findOneAndUpdate({bot_id:userId},{paypal_link:addPaypalData.link}).
+        findOneAndUpdate({bot_id:ctx.from.id},{paypal_link:oneAnswer.first}).
         then(async ()=>{
-            await bot.telegram.sendMessage(chatId,`✅ link added successfully!`)
-            await generateCommands(chatId,userId)
-            resetAddPaypal()
+            await ctx.reply(`✅ link added successfully!`)
+            await generateCommands(ctx)
         }).catch(async ()=>{
-            await bot.telegram.sendMessage(chatId,'❌ operation failed! enter /start to try again!')
+            await ctx.reply('❌ operation failed! enter /start to try again!')
         })
+      resetAllAnswers();
+      resetAllStates();
   }
 }
 
 module.exports= {
-    addPaypalProcess,addPaypalData
+    addPaypalProcess
 }
