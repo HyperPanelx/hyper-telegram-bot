@@ -1,14 +1,13 @@
 const {bot}=require('../bot.config');
 const {commandValidation} = require("../utils/utils");
-const {twoQuestion}=require('../utils/states')
-
-
+const {getTwoQuestionState}=require('../utils/states')
 
 
 bot.command('reset',async (ctx)=>{
     await commandValidation(async ()=>{
-        twoQuestion.key='reset_password'
-        twoQuestion.second=true
+        const twoQuestionState=getTwoQuestionState(ctx.chat.id)
+        twoQuestionState.key='reset_password'
+        twoQuestionState.second=true
         await ctx.reply('Enter username:')
     },ctx)
 })

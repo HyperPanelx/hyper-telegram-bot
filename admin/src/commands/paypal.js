@@ -1,7 +1,7 @@
 const {bot} = require("../bot.config");
 const {commandValidation} = require("../utils/utils");
 const adminModel=require('../models/Admin')
-const {oneQuestion}=require('../utils/states')
+const { getOneQuestionState}=require('../utils/states')
 
 
 bot.command('add_paypal',async (ctx)=>{
@@ -16,8 +16,9 @@ bot.command('add_paypal',async (ctx)=>{
                 },
             });
         }else{
-            oneQuestion.key='add_paypal'
-            oneQuestion.first=true
+            const oneQuestionState=getOneQuestionState(ctx.chat.id)
+            oneQuestionState.key='add_paypal'
+            oneQuestionState.first=true
             await ctx.reply('Enter link:');
         }
     },ctx)

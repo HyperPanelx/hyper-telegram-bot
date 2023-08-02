@@ -1,32 +1,35 @@
 const {generateUser,generateCommands}=require('./utils')
 const {serverData} = require("./addServer");
-const {threeQuestion,resetAllStates}=require('../utils/states')
-const {threeAnswers,resetAllAnswers}=require('../utils/answers')
+const {resetAllStates, getThreeQuestionState} = require("./states");
+const {resetAllAnswers, getThreeAnswersState} = require("./answers");
 
 
 const generateUserProcess = async (ctx,txt) => {
-    if(threeQuestion.second){
-        threeQuestion.second=false
+    const threeQuestionState=getThreeQuestionState(ctx.chat.id);
+    const threeAnswerState=getThreeAnswersState(ctx.chat.id);
+
+    if(threeQuestionState && threeQuestionState.second){
+        threeQuestionState.second=false
         //// multi
-        threeAnswers.first=txt
+        threeAnswerState.first=txt
         await ctx.reply('Enter expiration date (yyyy-mm-dd):');
-    }else if(threeQuestion.third){
-        threeQuestion.third=false
+    }else if(threeQuestionState.third){
+        threeQuestionState.third=false
         //exdate
-        threeAnswers.second=txt
+        threeAnswerState.second=txt
         await ctx.reply('Enter count:')
-    }else if(threeAnswers.first && threeAnswers.second && !threeQuestion.first && !threeQuestion.second && !threeQuestion.third){
+    }else if(threeAnswerState.first && threeAnswerState.second && !threeQuestionState.first && !threeQuestionState.second && !threeQuestionState.third){
         /// count
-        threeAnswers.third=txt;
-        const generatedUser=await generateUser(threeAnswers.first,threeAnswers.second,threeAnswers.third,serverData.ip,serverData.token);
+        threeAnswerState.third=txt;
+        const generatedUser=await generateUser(threeAnswerState.first,threeAnswerState.second,threeAnswerState.third,serverData.ip,serverData.token);
         if(generatedUser){
             await ctx.reply(`✅ users generated successfully!\n\n`+generatedUser)
             await generateCommands(ctx)
         }else{
             await ctx.reply('❌ operation failed! enter /start to try again!')
         }
-        resetAllStates();
-        resetAllAnswers();
+        resetAllStates(ctx.chat.id);
+        resetAllAnswers(ctx.chat.id);
     }
 }
 

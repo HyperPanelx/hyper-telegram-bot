@@ -1,32 +1,35 @@
 const {createAdmin,generateCommands}=require('./utils')
 const {serverData} = require("./addServer");
-const {threeQuestion,resetAllStates}=require('./states')
-const {threeAnswers,resetAllAnswers}=require('./answers')
+const {resetAllStates,getThreeQuestionState}=require('./states')
+const {resetAllAnswers, getThreeAnswersState}=require('./answers')
 
 
 const createAdminProcess = async (ctx,txt) => {
-    if(threeQuestion.second){
-        threeQuestion.second=false
+    const threeQuestionState=getThreeQuestionState(ctx.chat.id);
+    const threeAnswersState=getThreeAnswersState(ctx.chat.id);
+
+    if(threeQuestionState&&threeQuestionState.second){
+        threeQuestionState.second=false
         /// username
-        threeAnswers.first=txt
+        threeAnswersState.first=txt
         await ctx.reply('Enter new password:');
-    }else if(threeQuestion.third){
-        threeQuestion.third=false
+    }else if(threeQuestionState.third){
+        threeQuestionState.third=false
         /// password
-        threeAnswers.second=txt
+        threeAnswersState.second=txt
         await ctx.reply('Enter role:\n0 = full access');
-    }else if( threeAnswers.first && threeAnswers.second && !threeQuestion.first && !threeQuestion.second && !threeQuestion.third){
+    }else if( threeAnswersState.first && threeAnswersState.second && !threeQuestionState.first && !threeQuestionState.second && !threeQuestionState.third){
         /// role
-        threeAnswers.third=txt
-        const isCreated=await createAdmin(serverData.ip,serverData.token,threeAnswers.first,threeAnswers.second,threeAnswers.third);
+        threeAnswersState.third=txt
+        const isCreated=await createAdmin(serverData.ip,serverData.token,threeAnswersState.first,threeAnswersState.second,threeAnswersState.third);
         if(isCreated){
             await ctx.reply(`✅ admin user created successfully!`);
             await generateCommands(ctx);
         }else{
             await ctx.reply('❌ operation failed! enter /start to try again!');
         }
-        resetAllAnswers();
-        resetAllStates();
+        resetAllAnswers(ctx.chat.id);
+        resetAllStates(ctx.chat.id);
     }
 }
 

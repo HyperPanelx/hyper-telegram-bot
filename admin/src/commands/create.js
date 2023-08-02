@@ -1,14 +1,15 @@
 const {bot}=require('../bot.config');
 const {commandValidation}=require('../utils/utils')
-const {threeQuestion}=require('../utils/states')
+const {getThreeQuestionState}=require('../utils/states')
 
 
 
 bot.command('create',async (ctx)=>{
     await commandValidation(async ()=>{
-        threeQuestion.key='create_admin'
-        threeQuestion.second=true
-        threeQuestion.third=true
+        const threeQuestionState=getThreeQuestionState(ctx.chat.id)
+        threeQuestionState.key='create_admin'
+        threeQuestionState.second=true
+        threeQuestionState.third=true
         await ctx.reply('Enter username:')
     },ctx)
 

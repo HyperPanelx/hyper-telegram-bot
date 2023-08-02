@@ -1,5 +1,5 @@
-const {threeQuestion,resetAllStates}=require('./states')
-const {threeAnswers,resetAllAnswers}=require('./answers')
+const {resetAllStates, getThreeQuestionState}=require('./states')
+const {resetAllAnswers, getThreeAnswersState}=require('./answers')
 const f = require("node-fetch");
 const {urlEncode}=require('./utils')
 const adminModel=require('../models/Admin')
@@ -25,21 +25,24 @@ const validateServer =async (ip,username,password) => {
 }
 
 const startAuthProcess = async (ctx,txt) => {
-    if(threeQuestion.third){
-        threeQuestion.third=false
+    const threeQuestionState=getThreeQuestionState(ctx.chat.id);
+    const threeAnswersState=getThreeAnswersState(ctx.chat.id);
+
+    if(threeQuestionState&&threeQuestionState.third){
+        threeQuestionState.third=false
         /// username
-        threeAnswers.second=txt
+        threeAnswersState.second=txt
         ctx.reply('Enter admin password:')
-    }else if(threeAnswers.first && threeAnswers.second && !threeQuestion.first && !threeQuestion.second && !threeQuestion.third){
+    }else if(threeAnswersState.first && threeAnswersState.second && !threeQuestionState.first && !threeQuestionState.second && !threeQuestionState.third){
         /// password
-        threeAnswers.third=txt
-        const new_token=await validateServer(threeAnswers.first,threeAnswers.second,threeAnswers.third);
+        threeAnswersState.third=txt
+        const new_token=await validateServer(threeAnswersState.first,threeAnswersState.second,threeAnswersState.third);
         if(new_token){
             const getAdmin=await adminModel.findOne({bot_id:ctx.from.id});
             const adminServers=[...getAdmin.server];
             const changedTokenServers=adminServers.map(item=>{
-                if(item.ip===threeAnswers.first){
-                    return {ip:threeAnswers.first,token:new_token}
+                if(item.ip===threeAnswersState.first){
+                    return {ip:threeAnswersState.first,token:new_token}
                 }else{
                     return item
                 }
@@ -49,8 +52,8 @@ const startAuthProcess = async (ctx,txt) => {
         }else{
             ctx.reply('❌ Authentication failed! enter /start to try again!')
         }
-        resetAllAnswers();
-        resetAllStates();
+        resetAllAnswers(ctx.chat.id);
+        resetAllStates(ctx.chat.id);
 
     }
 }

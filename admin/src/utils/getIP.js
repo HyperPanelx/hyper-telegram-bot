@@ -1,22 +1,24 @@
 const {getIPRequest, generateCommands}=require('./utils')
 const {serverData} = require("./addServer");
-const {oneQuestion,resetAllStates}=require('./states')
-const {oneAnswer,resetAllAnswers}=require('./answers')
+const {resetAllStates, getOneQuestionState}=require('./states')
+const {resetAllAnswers, getOneAnswersState}=require('./answers')
 
 
 const getIPProcess = async (ctx,txt) => {
-  if(oneQuestion.first){
+    const oneQuestionState=getOneQuestionState(ctx.chat.id)
+    const oneAnswersState=getOneAnswersState(ctx.chat.id)
+  if(oneQuestionState&&oneQuestionState.first){
       /// username
-      oneAnswer.first=txt
-      const clientIPs=await getIPRequest(serverData.ip,serverData.token,oneAnswer.first);
+      oneAnswersState.first=txt
+      const clientIPs=await getIPRequest(serverData.ip,serverData.token,oneAnswersState.first);
       if(clientIPs){
           await ctx.reply(`✅ connected client ips are:\n`+clientIPs)
           await generateCommands(ctx)
       }else{
           await ctx.reply('❌ operation failed! enter /start to try again!')
       }
-      resetAllAnswers();
-      resetAllStates();
+      resetAllAnswers(ctx.chat.id);
+      resetAllStates(ctx.chat.id);
   }
 }
 

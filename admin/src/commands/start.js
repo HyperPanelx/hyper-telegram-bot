@@ -2,8 +2,10 @@ require('dotenv').config()
 const nanoid=require('nanoid')
 const {bot}=require('../bot.config')
 const adminModel=require('../models/Admin')
-const {fourQuestion,threeQuestion,twoQuestion,oneQuestion,resetAllStates}=require('../utils/states');
-const {resetAllAnswers, threeAnswers}=require('../utils/answers')
+////
+const {resetAllStates,getThreeQuestionState,getFourQuestionState,getTwoQuestionState,getOneQuestionState}=require('../utils/states');
+
+const {resetAllAnswers, threeAnswers,getThreeAnswersState, getFourAnswersState}=require('../utils/answers')
 const {generateCommands,getMe}=require('../utils/utils');
 const {addServerProcess, serverData}=require('../utils/addServer');
 const {generateUserProcess}=require('../utils/generateUser');
@@ -20,13 +22,13 @@ const {startAuthProcess}=require('../utils/startAuth');
 ///////////
 
 bot.command('start', ctx => {
-    resetAllStates();
-    resetAllAnswers();
+    resetAllStates(ctx.chat.id);
+    resetAllAnswers(ctx.chat.id);
     const {id,first_name}=ctx.from;
     adminModel.
-    find({bot_id:id}).
+    findOne({bot_id:id}).
     then(async response=>{
-        if(response.length===0){
+        if(!response){
             //// first time
             const newUser=new adminModel({
                 bot_id:id,
@@ -49,7 +51,7 @@ bot.command('start', ctx => {
                 })
             })
         }else{
-            if(response[0].server.length===0){
+            if(response.server.length===0){
                ctx.reply(
                    `✅ Hello ${first_name}! Welcome to SSH bot management. \n❔ You dont have any available server! do you want add one?`,
                    {
@@ -61,11 +63,11 @@ bot.command('start', ctx => {
                    },
                })
             }else{
-                const servers_list=response[0].server.map((item)=>{
+                const servers_list=response.server.map((item)=>{
                     return [{text:item.ip,callback_data: `select_server-${item.ip}`}]
                 });
                 ctx.reply(
-                    `✅ Hello ${first_name}! Welcome to SSH bot management. you have ${response[0].server.length} available server!`,
+                    `✅ Hello ${first_name}! Welcome to SSH bot management. you have ${response.server.length} available server!`,
                     {
                         reply_markup: {
                             inline_keyboard: [
@@ -84,10 +86,11 @@ bot.command('start', ctx => {
 
 
 bot.action('add_server',async (ctx)=>{
-    fourQuestion.key='add_server'
-    fourQuestion.second=true
-    fourQuestion.third=true
-    fourQuestion.fourth=true
+    const fourQuestionState=getFourQuestionState(ctx.chat.id);
+    fourQuestionState.key='add_server'
+    fourQuestionState.second=true
+    fourQuestionState.third=true
+    fourQuestionState.fourth=true
     await ctx.reply('Enter IP address:')
 })
 
@@ -113,8 +116,9 @@ bot.action('show_servers',async (ctx)=>{
 })
 
 bot.action('change_paypal_link',async (ctx)=>{
-    oneQuestion.key='add_paypal'
-    oneQuestion.first=true
+    const oneQuestionState=getOneQuestionState(ctx.chat.id);
+    oneQuestionState.key='add_paypal'
+    oneQuestionState.first=true
     await ctx.reply('Enter link:');
 })
 bot.action('show_to_remove_server',async (ctx)=>{
@@ -158,9 +162,11 @@ bot.on('callback_query',async (ctx)=>{
         }
     }else if(query.includes('start_authentication')){
         const server_ip=query.split('-')[1];
-        threeQuestion.key='start_authentication'
-        threeQuestion.third=true
-        threeAnswers.first=server_ip
+        const threeQuestionState=getThreeQuestionState(ctx.chat.id);
+        const threeAnswersState=getThreeAnswersState(ctx.chat.id);
+        threeQuestionState.key='start_authentication';
+        threeQuestionState.third=true;
+        threeAnswersState.first=server_ip;
         ctx.reply('Enter admin username:')
     }else if(query.includes('remove_server')){
         const server_ip=query.split('-')[1];
@@ -179,18 +185,22 @@ bot.on('callback_query',async (ctx)=>{
 
 bot.on('message',  async (ctx) =>{
     const txt=ctx.update.message.text;
-    fourQuestion.key==='add_server' &&  await addServerProcess(ctx,txt);
-    threeQuestion.key==='generate' && await generateUserProcess(ctx,txt);
-    oneQuestion.key==='delete_user' && await deleteUserProcess(ctx,txt);
-    oneQuestion.key==='unlock' && await unlockUserProcess(ctx,txt);
-    oneQuestion.key==='lock' && await lockUserProcess(ctx,txt);
-    twoQuestion.key==='reset_password' && await resetUserPassProcess(ctx,txt);
-    threeQuestion.key==='create_admin' && await createAdminProcess(ctx,txt);
-    oneQuestion.key==='delete_admin' && await deleteAdminUserProcess(ctx,txt);
-    twoQuestion.key==='change_multi' && await changeMultiProcess(ctx,txt);
-    oneQuestion.key==='add_paypal' && await addPaypalProcess(ctx,txt);
-    oneQuestion.key==='get_ip' && await getIPProcess(ctx,txt);
-    threeQuestion.key==='start_authentication' && await startAuthProcess(ctx,txt);
+    const oneQuestionState=getOneQuestionState(ctx.chat.id);
+    const twoQuestionState=getTwoQuestionState(ctx.chat.id);
+    const threeQuestionState=getThreeQuestionState(ctx.chat.id);
+    const fourQuestionState=getFourQuestionState(ctx.chat.id);
+    fourQuestionState.key==='add_server' &&  await addServerProcess(ctx,txt);
+    threeQuestionState.key==='generate' && await generateUserProcess(ctx,txt);
+    oneQuestionState.key==='delete_user' && await deleteUserProcess(ctx,txt);
+    oneQuestionState.key==='unlock' && await unlockUserProcess(ctx,txt);
+    oneQuestionState.key==='lock' && await lockUserProcess(ctx,txt);
+    twoQuestionState.key==='reset_password' && await resetUserPassProcess(ctx,txt);
+    threeQuestionState.key==='create_admin' && await createAdminProcess(ctx,txt);
+    oneQuestionState.key==='delete_admin' && await deleteAdminUserProcess(ctx,txt);
+    twoQuestionState.key==='change_multi' && await changeMultiProcess(ctx,txt);
+    oneQuestionState.key==='add_paypal' && await addPaypalProcess(ctx,txt);
+    oneQuestionState.key==='get_ip' && await getIPProcess(ctx,txt);
+    threeQuestionState.key==='start_authentication' && await startAuthProcess(ctx,txt);
 });
 
 

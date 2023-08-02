@@ -1,7 +1,7 @@
 require('dotenv').config()
 const adminModel = require("../models/Admin");
-const {fourQuestion,resetAllStates}=require('./states')
-const {fourAnswers,resetAllAnswers}=require('./answers')
+const {resetAllStates,getFourQuestionState}=require('./states')
+const {resetAllAnswers,getFourAnswersState}=require('./answers')
 const f = require("node-fetch");
 //// server
 const serverData={
@@ -38,44 +38,46 @@ const validateServer =async (ip,username,password,port) => {
     }
 }
 const addServerProcess = async (ctx,txt) => {
+    const fourQuestionState=getFourQuestionState(ctx.chat.id);
+    const fourAnswerState=getFourAnswersState(ctx.chat.id);
 
-    if(fourQuestion.second){
-        fourQuestion.second=false
+    if(fourQuestionState && fourQuestionState.second){
+        fourQuestionState.second=false
         /// ip
-        fourAnswers.first=txt
+        fourAnswerState.first=txt
 
         await ctx.reply('Enter admin username:')
-    }else if(fourQuestion.third){
-        fourQuestion.third=false
+    }else if(fourQuestionState.third){
+        fourQuestionState.third=false
         // username
-        fourAnswers.second=txt
+        fourAnswerState.second=txt
 
         await ctx.reply('Enter admin password:')
-    }else if(fourQuestion.fourth){
-        fourQuestion.fourth=false
+    }else if(fourQuestionState.fourth){
+        fourQuestionState.fourth=false
         // password
-        fourAnswers.third=txt
+        fourAnswerState.third=txt
 
         await ctx.reply('Enter Api port:\n⚠️Note: if you dont know the port enter 6655, otherwise enter port')
-    } else if(fourAnswers.first && fourAnswers.second && fourAnswers.third && !fourQuestion.first && !fourQuestion.second && !fourQuestion.third && !fourQuestion.fourth){
+    } else if(fourAnswerState.first && fourAnswerState.second && fourAnswerState.third && !fourQuestionState.first && !fourQuestionState.second && !fourQuestionState.third && !fourQuestionState.fourth){
         /// port
-        fourAnswers.fourth=txt;
-        const access_token=await validateServer(fourAnswers.first,fourAnswers.second,fourAnswers.third,fourAnswers.fourth);
+        fourAnswerState.fourth=txt;
+        const access_token=await validateServer(fourAnswerState.first,fourAnswerState.second,fourAnswerState.third,fourAnswerState.fourth);
         if(access_token){
             await ctx.reply('✅ Server is valid and authenticated! enter /start to restart bot.');
             const adminData=await adminModel.findOne({bot_id:ctx.from.id});
             await adminModel.findOneAndUpdate({bot_id:ctx.from.id},{
                 server: [
                     ...adminData.server,
-                    {ip:`${fourAnswers.first}:${fourAnswers.fourth}`,token:access_token}
+                    {ip:`${fourAnswerState.first}:${fourAnswerState.fourth}`,token:access_token}
                 ]
                },
             );
         }else{
             await ctx.reply('❌ Server is invalid and unavailable! enter /start to restart bot.');
         }
-        resetAllStates()
-        resetAllAnswers()
+        resetAllStates(ctx.chat.id)
+        resetAllAnswers(ctx.chat.id)
     }
 }
 

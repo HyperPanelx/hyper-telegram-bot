@@ -1,23 +1,26 @@
 const adminModel=require('../models/Admin')
 const {generateCommands} = require("./utils");
-const {oneQuestion,resetAllStates}=require('./states')
-const {oneAnswer,resetAllAnswers}=require('./answers')
+const {resetAllStates, getOneQuestionState}=require('./states')
+const {resetAllAnswers, getOneAnswersState}=require('./answers')
 
 
 const addPaypalProcess = async (ctx,txt) => {
-  if(oneQuestion.first){
+    const oneQuestionState=getOneQuestionState(ctx.chat.id);
+    const oneAnswersState=getOneAnswersState(ctx.chat.id);
+
+  if(oneQuestionState&&oneQuestionState.first){
       /// link
-      oneAnswer.first=txt
+      oneAnswersState.first=txt
         adminModel.
-        findOneAndUpdate({bot_id:ctx.from.id},{paypal_link:oneAnswer.first}).
+        findOneAndUpdate({bot_id:ctx.from.id},{paypal_link:oneAnswersState.first}).
         then(async ()=>{
             await ctx.reply(`✅ link added successfully!`)
             await generateCommands(ctx)
         }).catch(async ()=>{
             await ctx.reply('❌ operation failed! enter /start to try again!')
         })
-      resetAllAnswers();
-      resetAllStates();
+      resetAllAnswers(ctx.chat.id);
+      resetAllStates(ctx.chat.id);
   }
 }
 

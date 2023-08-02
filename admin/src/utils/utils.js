@@ -62,8 +62,8 @@ const getMe = async (ip,token) => {
 const commandValidation =async (callback,ctx) => {
     const adminData=await adminModel.findOne({bot_id:ctx.from.id});
   if(serverData.ip && serverData.token){
-      resetAllAnswers();
-      resetAllStates();
+      resetAllAnswers(ctx.chat.id);
+      resetAllStates(ctx.chat.id);
       callback()
   }else{
       const servers_list=adminData.server.map((item)=>{

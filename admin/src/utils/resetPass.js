@@ -1,27 +1,30 @@
 const {generateCommands,resetPassword}=require('./utils')
 const {serverData} = require("./addServer");
-const {twoQuestion,resetAllStates}=require('./states')
-const {twoAnswers,resetAllAnswers}=require('./answers')
+const {resetAllStates,getTwoQuestionState}=require('./states')
+const {resetAllAnswers, getTwoAnswersState}=require('./answers')
 
 
 const resetUserPassProcess = async (ctx,txt) => {
-    if(twoQuestion.second){
-        twoQuestion.second=false
+    const twoQuestionState=getTwoQuestionState(ctx.chat.id);
+    const twoAnswersState=getTwoAnswersState(ctx.chat.id);
+
+    if(twoQuestionState&&twoQuestionState.second){
+        twoQuestionState.second=false
         /// username
-        twoAnswers.first=txt
+        twoAnswersState.first=txt
         await ctx.reply('Enter new password:');
-    }else if( twoAnswers.first && !twoQuestion.first && !twoQuestion.second){
+    }else if( twoAnswersState.first && !twoQuestionState.first && !twoQuestionState.second){
         /// new pass
-        twoAnswers.second=txt
-        const isPasswordReset=await resetPassword(serverData.ip,serverData.token,twoAnswers.first,twoAnswers.second);
+        twoAnswersState.second=txt
+        const isPasswordReset=await resetPassword(serverData.ip,serverData.token,twoAnswersState.first,twoAnswersState.second);
         if(isPasswordReset){
             await ctx.reply(`✅ user's password changed successfully!`)
             await generateCommands(ctx)
         }else{
             await ctx.reply('❌ operation failed! enter /start to try again!')
         }
-        resetAllAnswers();
-        resetAllStates();
+        resetAllAnswers(ctx.chat.id);
+        resetAllStates(ctx.chat.id);
     }
 }
 

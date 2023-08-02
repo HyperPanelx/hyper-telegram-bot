@@ -1,12 +1,13 @@
 const {bot} = require("../bot.config");
 const {commandValidation} = require("../utils/utils");
-const {oneQuestion}=require('../utils/states')
+const { getOneQuestionState}=require('../utils/states')
 
 
 bot.command('get_ip',async (ctx)=>{
     await commandValidation(async ()=>{
-        oneQuestion.key='get_ip'
-        oneQuestion.first=true
+        const oneQuestionState=getOneQuestionState(ctx.chat.id)
+        oneQuestionState.key='get_ip'
+        oneQuestionState.first=true
         await ctx.reply('Enter username:')
     },ctx)
 })

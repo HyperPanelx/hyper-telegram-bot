@@ -1,12 +1,13 @@
 const {bot}=require('../bot.config');
 const {commandValidation}=require('../utils/utils')
-const {twoQuestion}=require('../utils/states')
+const {getTwoQuestionState}=require('../utils/states')
 
 
 bot.command('change_multi',async (ctx)=>{
     await commandValidation(async ()=>{
-        twoQuestion.key='change_multi'
-        twoQuestion.second=true
+        const twoQuestionState=getTwoQuestionState(ctx.chat.id);
+        twoQuestionState.key='change_multi'
+        twoQuestionState.second=true
         await ctx.reply('Enter username:')
     },ctx)
 })

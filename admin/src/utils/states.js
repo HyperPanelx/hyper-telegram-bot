@@ -1,56 +1,91 @@
 
 
-const oneQuestion = {
-    key:null,
-    first:false
+const oneQuestion = {}
+const getOneQuestionState = (chatId) => {
+    let userData = oneQuestion[chatId];
+    if (!userData) {
+        userData = {
+            key:null,
+            first:false
+        }
+        oneQuestion[chatId] = userData
+    }
+    return userData
 }
 
 
-const twoQuestion = {
-  key:null,
-  first:false,
-  second:false,
-}
-const threeQuestion = {
-    key:null,
-    first:false,
-    second:false,
-    third:false,
-}
+const twoQuestion = {}
 
-const fourQuestion = {
-    key:null,
-    first:false,
-    second:false,
-    third:false,
-    fourth:false
+const getTwoQuestionState = (chatId) => {
+    let userData = twoQuestion[chatId];
+    if (!userData) {
+        userData = {
+            key:null,
+            first:false,
+            second:false,
+        }
+        twoQuestion[chatId] = userData
+    }
+    return userData
 }
 
-const resetAllStates = () => {
-    oneQuestion.first=false
-    oneQuestion.key=null
+const threeQuestion = {}
+const getThreeQuestionState = (chatId) => {
+    let userData = threeQuestion[chatId];
+    if (!userData) {
+        userData = {
+            key:null,
+            first:false,
+            second:false,
+            third:false,
+        }
+        threeQuestion[chatId] = userData
+    }
+    return userData
+}
 
-    twoQuestion.key=null
-    twoQuestion.first=false
-    twoQuestion.second=false
+const fourQuestion = {}
 
-    threeQuestion.key=null
-    threeQuestion.first=false
-    threeQuestion.second=false
-    threeQuestion.third=false
+const getFourQuestionState = (chatId) => {
+    let userData = fourQuestion[chatId];
+    if (!userData) {
+        userData = {
+            key:null,
+            first:false,
+            second:false,
+            third:false,
+            fourth:false
+        }
+        fourQuestion[chatId] = userData
+    }
+    return userData
+}
 
-    fourQuestion.key=null
-    fourQuestion.first=false
-    fourQuestion.second=false
-    fourQuestion.third=false
-    fourQuestion.fourth=false
+const resetAllStates = (chatId) => {
+    const oneQuestionState = getOneQuestionState(chatId)
+    oneQuestionState.key=null
+    oneQuestionState.first=null
+
+    const twoQuestionState=getTwoQuestionState(chatId);
+    twoQuestionState.key=null
+    twoQuestionState.first=false
+    twoQuestionState.second=false
+
+    const threeQuestionState=getThreeQuestionState(chatId)
+    threeQuestionState.key=null
+    threeQuestionState.first=false
+    threeQuestionState.second=false
+    threeQuestionState.third=false
+
+    const fourQuestionState=getFourQuestionState(chatId)
+    fourQuestionState.key=null
+    fourQuestionState.first=false
+    fourQuestionState.second=false
+    fourQuestionState.third=false
+    fourQuestionState.fourth=false
 
 }
 
 module.exports={
-    oneQuestion,
-    twoQuestion,
-    threeQuestion,
-    fourQuestion,
-    resetAllStates
+    resetAllStates,getFourQuestionState,getTwoQuestionState,getOneQuestionState,getThreeQuestionState
 }
