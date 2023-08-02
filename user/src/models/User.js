@@ -2,10 +2,24 @@ const mongoose=require('mongoose')
 
 
 const userSchema=mongoose.Schema({
-    firstname:{
+    tel_name:{
         type:String,
-        required:true,
-        minLength:2,
+        required:false,
+        minLength:0,
+        maxLength:100,
+        trim:true
+    },
+    tel_username:{
+        type:String,
+        required:false,
+        minLength:0,
+        maxLength:100,
+        trim:true
+    },
+    phone:{
+        type:String,
+        required:false,
+        minLength:0,
         maxLength:100,
         trim:true
     },
@@ -16,8 +30,8 @@ const userSchema=mongoose.Schema({
         maxLength:100,
         trim:true
     },
-    referral_token:{
-        type:String,
+    accounts:{
+        type:Array,
         required:false,
         minLength:0,
         maxLength:100,

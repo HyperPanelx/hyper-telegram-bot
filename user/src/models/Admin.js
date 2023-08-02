@@ -6,14 +6,7 @@ const adminSchema=mongoose.Schema({
         type:String,
         required:true,
         trim:true,
-        minLength:3,
-        maxLength:200
-    },
-    token:{
-        type:String,
-        required:false,
-        trim:true,
-        minLength:0,
+        minLength:1,
         maxLength:200
     },
     bot_id:{
@@ -24,10 +17,8 @@ const adminSchema=mongoose.Schema({
         maxLength:200
     },
     server:{
-        type:String,
+        type:Array,
         required:false,
-        minLength:0,
-        maxLength:200
     },
     referral_token:{
         type:String,
@@ -35,7 +26,7 @@ const adminSchema=mongoose.Schema({
         minLength:0,
         maxLength:200
     },
-    paypal_link:{
+    zarinpal_token:{
         type:String,
         required:false,
         minLength:0,

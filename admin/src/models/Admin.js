@@ -26,7 +26,7 @@ const adminSchema=mongoose.Schema({
         minLength:0,
         maxLength:200
     },
-    paypal_link:{
+    zarinpal_token:{
         type:String,
         required:false,
         minLength:0,

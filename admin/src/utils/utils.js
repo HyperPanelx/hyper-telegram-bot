@@ -1,5 +1,4 @@
 require('dotenv').config()
-const {bot}=require('../bot.config')
 const f = require("node-fetch");
 const adminModel=require('../models/Admin')
 const {resetAllStates}=require('./states')
@@ -47,7 +46,7 @@ const getMe = async (ip,token) => {
 
 
  const generateCommands = async (ctx) => {
-    await ctx.reply(`⚒ Available operations on ${serverData.ip}:\n💡 /users - users list\n💡 /online - online users\n💡 /generate - generate user \n💡 /delete - delete user \n💡 /get_ip - get user connections ip \n💡 /unlock - unlock user\n💡 /lock - lock user\n💡 /reset - reset password\n💡 /create - create admin user\n💡 /delete_admin - delete admin user\n💡 /referral_token - get referral token\n💡 /change_multi -  change user multi\n💡 /add_paypal -  add your paypal link`,{
+    await ctx.reply(`⚒ Available operations on ${serverData.ip}:\n💡 /users - users list\n💡 /online - online users\n💡 /generate - generate user \n💡 /delete - delete user \n💡 /get_ip - get user connections ip \n💡 /unlock - unlock user\n💡 /lock - lock user\n💡 /reset - reset password\n💡 /create - create admin user\n💡 /delete_admin - delete admin user\n💡 /referral_token - get referral token\n💡 /change_multi -  change user multi\n💡 /add_paypal -  add your zarinpal token`,{
         reply_markup:{
             inline_keyboard: [
                 [{text:'add server',callback_data: 'add_server'}],

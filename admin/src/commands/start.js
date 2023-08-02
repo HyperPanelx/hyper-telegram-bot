@@ -4,8 +4,7 @@ const {bot}=require('../bot.config')
 const adminModel=require('../models/Admin')
 ////
 const {resetAllStates,getThreeQuestionState,getFourQuestionState,getTwoQuestionState,getOneQuestionState}=require('../utils/states');
-
-const {resetAllAnswers, threeAnswers,getThreeAnswersState, getFourAnswersState}=require('../utils/answers')
+const {resetAllAnswers,getThreeAnswersState}=require('../utils/answers')
 const {generateCommands,getMe}=require('../utils/utils');
 const {addServerProcess, serverData}=require('../utils/addServer');
 const {generateUserProcess}=require('../utils/generateUser');
@@ -35,7 +34,7 @@ bot.command('start', ctx => {
                 firstname:first_name,
                 referral_token:nanoid.nanoid(32),
                 server:[],
-                paypal_link:''
+                zarinpal_token:''
             });
             newUser.
             save().
@@ -115,11 +114,11 @@ bot.action('show_servers',async (ctx)=>{
 
 })
 
-bot.action('change_paypal_link',async (ctx)=>{
+bot.action('change_zarinpal_token',async (ctx)=>{
     const oneQuestionState=getOneQuestionState(ctx.chat.id);
     oneQuestionState.key='add_paypal'
     oneQuestionState.first=true
-    await ctx.reply('Enter link:');
+    await ctx.reply('Enter Token:');
 })
 bot.action('show_to_remove_server',async (ctx)=>{
     const getAdmin=await adminModel.findOne({bot_id:ctx.from.id});
