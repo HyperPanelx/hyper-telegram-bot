@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HYPER</title>
+</head>
+<body>
+ <h1>در حال انتقال به درگاه پرداخت</h1>
+    <h4>اگر منتقل نشدید روی این دکمه کلیک کنید</h4>
+ <button id="btn">
+     redirect
+ </button>
+    <script>
+        const params = new Proxy(new URLSearchParams(window.location.search), {
+            get: (searchParams, prop) => searchParams.get(prop),
+        });
+        const startRedirection = async () => {
+            const{authority,server,port,bot_name,order_id}=params;
+            if(authority && server && port && bot_name && order_id){
+                fetch(`http://${server}:${port}/transactions?authority=${authority}&order_id=${order_id}`,{
+                    method:'POST',
+                    headers:{
+                        'Content-Type':'application/json'
+                    }
+                }).then(response=>response.json()).then(response=>{
+                    if(response.error){
+                        window.location='https://t.me/'+bot_name+"?start=failed"+authority
+                    }else{
+                        window.location='https://www.zarinpal.com/pg/StartPay/'+authority
+                    }
+
+                }).catch(err=>{
+                    window.location='https://t.me/'+bot_name+"?start=failed"+authority
+                })
+            }else{
+                window.location='https://t.me/'+bot_name+"?start=failed"+authority
+            }
+        }
+        window.addEventListener('load',startRedirection)
+        document.querySelector('#btn').addEventListener('click',startRedirection)
+    </script>
+</body>
+</html>

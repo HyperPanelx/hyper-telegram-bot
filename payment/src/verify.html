@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HYPER</title>
+</head>
+<body>
+    <h1>در حال انتقال به ربات تلگرام</h1>
+    <button id="btn_1">
+        redirect
+    </button>
+
+<script >
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+        get: (searchParams, prop) => searchParams.get(prop),
+    });
+
+  const submit_payment = () => {
+      const {server,port,Authority,Status,bot_name}=params;
+      if(server && port && Authority && Status && bot_name){
+          fetch(`http://${server}:${port}/verify?authority=${Authority}&status=${Status}`,{
+              method:'POST',
+              headers:{
+                  'Content-Type':'application/json'
+              }
+          }).then(res=>res.json()).then(response=>{
+              if(response.error){
+                  window.location='https://t.me/'+bot_name+`?start=failed${Authority}`
+              }else{
+                  window.location='https://t.me/'+bot_name+`?start=${Authority}`
+              }
+          }).catch(err=>{
+              window.location='https://t.me/'+bot_name+`?start=failed${Authority}`
+          })
+      }else{
+          window.location='https://t.me/'+bot_name+`?start=failed`+Authority
+      }
+
+  }
+
+
+
+    window.addEventListener('load',submit_payment)
+    document.querySelector('#btn_1').addEventListener('click',submit_payment)
+</script>
+
+
+</body>
+</html>

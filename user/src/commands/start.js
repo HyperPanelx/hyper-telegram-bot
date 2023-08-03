@@ -2,20 +2,36 @@ require('dotenv').config()
 const nanoid=require('nanoid')
 const {bot}=require('../bot.config')
 const adminModel=require('../models/Admin')
+const transactionModel=require('../models/Transaction')
 const userModel=require('../models/User');
 const {addPhoneProcess}=require('../utils/addPhone')
-const {getOneQuestionState,resetAllStates,getTwoQuestionState}=require('../utils/states')
-const {getOneAnswersState,resetAllAnswers,getTwoAnswersState}=require('../utils/answers')
-const {validateToken,generateCommands, buy_plans, getServerLocation,getAdminsServersList,getPlans,getZarinToken,extractIps,getOrderData,requestPaypal}=require('../utils/utils');
-
+const {getOneQuestionState,getTwoQuestionState}=require('../utils/states')
+const {generateCommands,getAdminsServersList,getPlans,getZarinToken,getOrderData,transformPlanId,extractPlan}=require('../utils/utils');
+const {SelectPlanProcess,selectServersProcess}=require('../utils/buyAccount')
 const {shareData}=require('../utils/shareData')
 ///////////
-const { Telegraf, Markup } = require("telegraf");
+
 
 bot.command('start', async ctx => {
-    console.log(ctx)
     shareData.servers_list=await getAdminsServersList();
     shareData.zarinpal_token=await getZarinToken();
+    ///failed
+    /// A00000
+    const getInitialMessage=ctx.update.message.text.split('/start')[1].trim();
+    if(getInitialMessage.includes('failed')){
+        const authority=getInitialMessage.split('failed')[1];
+        const getTransaction=await transactionModel.findOne({transaction_id:authority,payment_status:'failed'});
+        const data=extractPlan(getTransaction);
+        await ctx.reply('❌ Transaction failed!\n'+`👜 Order id: ${data?._doc.order_id}\n🏆 Plan: ${data.plan.duration} Month - ${data.plan.multi} Multi user\n💴 Pay amount: ${data.plan.price} T\n🎖 Ref id : ${data?._doc.ref_id || ''}\n❔ Payment status: ${data?._doc?.payment_status}\n💳 Card number: ${data?._doc?.card_num || ''}`+'\n select show transactions and contact admins.')
+    }else if(getInitialMessage.startsWith('A0')){
+        const getTransaction=await transactionModel.findOne({transaction_id:getInitialMessage,payment_status:'success'});
+        if(getTransaction){
+            const data=extractPlan(getTransaction);
+            await ctx.reply('✅ Transaction was successful!\n'+`👜 Order id: ${data?._doc.order_id}\n🏆 Plan: ${data.plan.duration} Month - ${data.plan.multi} Multi user\n💴 Pay amount: ${data.plan.price} T\n🎖 Ref id : ${data?._doc.ref_id || ''}\n❔ Payment status: ${data?._doc?.payment_status}\n💳 Card number: ${data?._doc?.card_num || ''}`+'\n select show accounts to get your account!')
+        }
+    }
+
+
     const {id,first_name,username}=ctx.from;
     const userData=await userModel.findOne({bot_id:id});
     if(userData){
@@ -46,92 +62,82 @@ bot.command('start', async ctx => {
 
 
 bot.action('buy_account',async (ctx)=>{
-    const twoQuestionState=getTwoQuestionState(ctx.chat.id);
-    twoQuestionState.key='buy_account'
-    twoQuestionState.first=true
-    twoQuestionState.second=true
-    await getPlans(ctx)
+    ////
+    const getUserTransaction=await transactionModel.findOne({bot_id:ctx.from.id,payment_status:'waiting payment'});
+    if(getUserTransaction){
+        const order_data=getOrderData(getUserTransaction.plan_id,getUserTransaction.target_server);
+
+        ctx.reply(`🗿 You have got one active order!\n🚨 order id: ${getUserTransaction.order_id}\n🚨 plan: ${order_data.plan.duration} month - ${order_data.plan.multi} multi user - ${order_data.plan.price} T\n🚨 waiting for payment.`,{
+            reply_markup:{
+                inline_keyboard:[
+                    [{text:`pay`,url:process.env.REDIRECT_URL+`?authority=${getUserTransaction.transaction_id}&server=${process.env.SERVER_IP}&port=${process.env.PORT}&bot_name=${ctx.botInfo.username}&order_id=${getUserTransaction.order_id}`}],
+
+                    [{text:'cancel order',callback_data:`cancel_order-${getUserTransaction.transaction_id}`}]
+                ]
+            }
+        })
+    }else{
+        const twoQuestionState=getTwoQuestionState(ctx.chat.id);
+        twoQuestionState.key='buy_account'
+        twoQuestionState.first=true
+        twoQuestionState.second=true
+        await getPlans(ctx)
+    }
 })
 bot.action('show_account',(ctx)=>{
 
 })
 
-bot.action('show_transactions',(ctx)=>{
+bot.action('show_transactions',async (ctx)=>{
+    const allTransactions=await transactionModel.find({bot_id:ctx.from.id});
+    if(allTransactions.length>0){
+        const data=transformPlanId(allTransactions)
+        const transfered_data=data.map(item=>{
+            return `👜 Order id: ${item._doc.order_id}\n🏆 Plan: ${item.plan_id.duration} Month - ${item.plan_id.multi} Multi user\n💴 Pay amount: ${item.plan_id.price} T\n🎖 Ref id : ${item._doc?.ref_id || ''}\n❔ Payment status: ${item._doc.payment_status}\n💳 Card number: ${item?._doc?.card_num || ''}`
+        }).join('\n<--------------------->\n');
+        await ctx.reply('✅ Your Transactions:\n'+transfered_data);
+        await generateCommands(ctx);
+    }else{
+        await ctx.reply('❌ You have zero transaction record.');
+        await generateCommands(ctx);
+    }
 
 })
 
-/// plan
-/// server
+
+
+
 
 
 bot.on('callback_query', async (ctx) => {
     const query=ctx.update.callback_query.data;
     const twoQuestionState=getTwoQuestionState(ctx.chat.id);
-    const twoAnswersState=getTwoAnswersState(ctx.chat.id);
+
     if(twoQuestionState.key==='buy_account'){
         if(query.includes('select_plan') && twoQuestionState.first){
-            twoQuestionState.first=false
-            /// set plan id
-            twoAnswersState.first=Number(query.split('-')[1]);
-            const server_list=extractIps(shareData.servers_list);
-            if(server_list){
-                const getLocations=await getServerLocation(server_list);
-                const edited_servers_list=getLocations.map((item,index)=>{
-                    return [{text:`${index+1}. ${item.countryCode} - ${item.countryName}`,callback_data:`select_server-${item.ip}`}];
-                });
-                ctx.reply('✅ Our available servers.\n❔ Choose a location:',{
-                    reply_markup:{
-                        inline_keyboard:[
-                            ...edited_servers_list
-                        ]
-                    }
-                })
-            }else{
-                ctx.reply('❌ sorry but there is not any available server! contact to admins.')
-                await generateCommands(ctx)
-                resetAllStates(ctx.chat.id)
-                resetAllAnswers(ctx.chat.id)
-            }
+            await SelectPlanProcess(ctx,query);
+
         }else if(query.includes('select_server') && twoQuestionState.second){
-            twoQuestionState.second=false
-            /// set ip
-            twoAnswersState.second=query.split('-')[1];
-            const order_data=getOrderData(twoAnswersState.first,twoAnswersState.second);
-            const req=await requestPaypal(order_data.plan.price,ctx.botInfo.username);
-            console.log(req)
-            ctx.reply('pay:',{
-                reply_markup:{
-                    inline_keyboard:[
-                        [{text:'link',url:process.env.ZARIN_PAY_LINK+req.data.authority}]
-                    ]
-                }
-            })
+            await selectServersProcess(ctx,query);
 
         }
     }
 
+    if(query.includes('cancel_order')){
+         const transaction_id=query.split('-')[1];
+         await transactionModel.findOneAndUpdate({transaction_id:transaction_id},{payment_status:'failed'});
+         await ctx.reply('✅ Order cancelled!')
+         await generateCommands(ctx)
+    }
 
 })
-
-// {
-//     "ip" : "141.11.184.74:6655",
-//     "token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJob29tYW4iLCJleHAiOjE4MDQ1MTA5MzJ9.iRszq3Ly-XXEdm77aokBcgHhlFIrSnCBZk2igt6eS2Q"
-// }
-
-// {
-//     "ip" : "166.1.131.76:3939",
-//     "token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJob29tYW4iLCJleHAiOjE4MDQ1MTk3MDl9.3foUGivIiCioaa7G_3TuaO6o46RPN7qdaYIlN5rMNFw"
-// }
 
 
 
 bot.on('message',  async (ctx) =>{
     const txt=ctx.update.message.text;
     const oneQuestionState=getOneQuestionState(ctx.chat.id);
-    console.log(ctx)
-
     oneQuestionState.key==='add_phone' && await addPhoneProcess(ctx,txt)
-
 });
 
 

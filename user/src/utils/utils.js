@@ -56,11 +56,11 @@ const querySerialize = (obj) => {
 }
 
 const responseHandler = (error,msg,data) => {
-    return JSON.stringify({
+    return {
         error:error,
         msg:msg,
         data:data
-    })
+    }
 }
 
 
@@ -70,8 +70,8 @@ const generateCommands = (ctx) => {
       reply_markup:{
           inline_keyboard:[
               [{text:'🥇 buy account',callback_data:'buy_account'}],
-              [{text:'🥈 see all accounts',callback_data:'show_account'}],
-              [{text:'🥉 see all transactions',callback_data:'show_transactions'}],
+              [{text:'🥈 show accounts',callback_data:'show_account'}],
+              [{text:'🥉 show transactions',callback_data:'show_transactions'}],
           ]
       }
   })
@@ -159,8 +159,11 @@ const getPlans = (ctx) => {
     })
 }
 
-const requestPaypal = async (amount,bot_name) => {
+const requestAuthority = async (amount,bot_name,order_id) => {
     const url=process.env.ZARIN_PAY_REQUEST;
+    const call_back=process.env.CALLBACK_URL;
+    const server=process.env.SERVER_IP;
+    const port=process.env.PORT;
   try {
       const req=await f(url,{
           method:'POST',
@@ -170,19 +173,39 @@ const requestPaypal = async (amount,bot_name) => {
           body:JSON.stringify({
               merchant_id:shareData.zarinpal_token,
               amount:Number(amount+'0000'),
-              callback_url:`https://t.me/${bot_name}?start=`,
-              description:'pay for account'
+              callback_url:call_back+`?server=${server}&port=${port}&bot_name=${bot_name}`,
+              description:`order id: ${order_id}`
           })
       })
-      return await req.json();
+      const res=await req.json()
+      if(res.data && res.data.message==='Success' && res.data.authority){
+          return  res.data.authority
+      }else{
+          return false;
+      }
   }catch (err) {
-      return  err;
+      return  false;
   }
     
 }
 
+const transformPlanId = (source) => {
+  return source.map(item=>{
+      return {
+          ...item,
+          plan_id:buy_plans[item.plan_id-1]
+      }
+  })
+}
+
+const extractPlan = (src) => {
+  return {
+      ...src,
+      plan:buy_plans[src.plan_id-1]
+  }
+}
 
 
 module.exports={
-    querySerialize,responseHandler,generateCommands,commandValidation,buy_plans,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestPaypal
+    querySerialize,responseHandler,generateCommands,commandValidation,buy_plans,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan
 }
