@@ -1,5 +1,4 @@
 const {lockUser, generateCommands}=require('./utils')
-const {serverData} = require("./addServer");
 const {resetAllStates, getOneQuestionState}=require('./states')
 const {resetAllAnswers, getOneAnswersState}=require('./answers')
 
@@ -9,7 +8,7 @@ const lockUserProcess = async (ctx,txt) => {
   if(oneQuestionState&&oneQuestionState.first){
       /// username
       oneAnswerState.first=txt
-      const isDeleted=await lockUser(serverData.ip,serverData.token,oneAnswerState.first);
+      const isDeleted=await lockUser(ctx,oneAnswerState.first);
       if(isDeleted){
           await ctx.reply(`✅ user locked successfully!`)
           await generateCommands(ctx)

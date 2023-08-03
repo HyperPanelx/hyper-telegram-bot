@@ -1,5 +1,4 @@
 const {createAdmin,generateCommands}=require('./utils')
-const {serverData} = require("./addServer");
 const {resetAllStates,getThreeQuestionState}=require('./states')
 const {resetAllAnswers, getThreeAnswersState}=require('./answers')
 
@@ -21,7 +20,7 @@ const createAdminProcess = async (ctx,txt) => {
     }else if( threeAnswersState.first && threeAnswersState.second && !threeQuestionState.first && !threeQuestionState.second && !threeQuestionState.third){
         /// role
         threeAnswersState.third=txt
-        const isCreated=await createAdmin(serverData.ip,serverData.token,threeAnswersState.first,threeAnswersState.second,threeAnswersState.third);
+        const isCreated=await createAdmin(ctx,threeAnswersState.first,threeAnswersState.second,threeAnswersState.third);
         if(isCreated){
             await ctx.reply(`✅ admin user created successfully!`);
             await generateCommands(ctx);

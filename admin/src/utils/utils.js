@@ -3,7 +3,7 @@ const f = require("node-fetch");
 const adminModel=require('../models/Admin')
 const {resetAllStates}=require('./states')
 const {resetAllAnswers}=require('./answers')
-const {serverData}=require('./addServer')
+const {getServerData}=require('./addServer')
 
 const querySerialize = (obj) => {
   return Object.entries(obj).map(([key, val]) => `${key}=${val}`).join('&');
@@ -46,7 +46,8 @@ const getMe = async (ip,token) => {
 
 
  const generateCommands = async (ctx) => {
-    await ctx.reply(`⚒ Available operations on ${serverData.ip}:\n💡 /users - users list\n💡 /online - online users\n💡 /generate - generate user \n💡 /delete - delete user \n💡 /get_ip - get user connections ip \n💡 /unlock - unlock user\n💡 /lock - lock user\n💡 /reset - reset password\n💡 /create - create admin user\n💡 /delete_admin - delete admin user\n💡 /referral_token - get referral token\n💡 /change_multi -  change user multi\n💡 /add_paypal -  add your zarinpal token`,{
+     const serverDataState=getServerData(ctx.chat.id)
+    await ctx.reply(`⚒ Available operations on ${serverDataState.ip}:\n💡 /users - users list\n💡 /online - online users\n💡 /generate - generate user \n💡 /delete - delete user \n💡 /get_ip - get user connections ip \n💡 /unlock - unlock user\n💡 /lock - lock user\n💡 /reset - reset password\n💡 /create - create admin user\n💡 /delete_admin - delete admin user\n💡 /referral_token - get referral token\n💡 /change_multi -  change user multi\n💡 /add_paypal -  add your zarinpal token`,{
         reply_markup:{
             inline_keyboard: [
                 [{text:'add server',callback_data: 'add_server'}],
@@ -59,8 +60,9 @@ const getMe = async (ip,token) => {
 
 
 const commandValidation =async (callback,ctx) => {
+    const serverDataState=getServerData(ctx.chat.id)
     const adminData=await adminModel.findOne({bot_id:ctx.from.id});
-  if(serverData.ip && serverData.token){
+  if(serverDataState.ip && serverDataState.token){
       resetAllAnswers(ctx.chat.id);
       resetAllStates(ctx.chat.id);
       callback()
@@ -81,11 +83,12 @@ const commandValidation =async (callback,ctx) => {
   }
 }
 
-const getUsersList = async (ip,token) => {
+const getUsersList = async (ctx) => {
+    const serverDataState=getServerData(ctx.chat.id)
     try {
-        const request=await f(`http://${ip}/user-get?username=all`,{
+        const request=await f(`http://${serverDataState.ip}/user-get?username=all`,{
             headers:{
-                'Authorization':`Bearer ${token}`
+                'Authorization':`Bearer ${serverDataState.token}`
             }
         })
         const response=await request.json();
@@ -102,11 +105,12 @@ const getUsersList = async (ip,token) => {
     }
 }
 
-const getOnlineUsersList = async (ip,token) => {
+const getOnlineUsersList = async (ctx) => {
+    const serverDataState=getServerData(ctx.chat.id)
     try {
-        const request=await f(`http://${ip}/user-active?server=localhost`,{
+        const request=await f(`http://${serverDataState.ip}/user-active?server=localhost`,{
             headers:{
-                'Authorization':`Bearer ${token}`
+                'Authorization':`Bearer ${serverDataState.token}`
             }
         });
         const response=await request.json();
@@ -124,7 +128,8 @@ const getOnlineUsersList = async (ip,token) => {
     }
 };
 
-const generateUser =async (multi,exdate,count,ip,token) => {
+const generateUser =async (multi,exdate,count,ctx) => {
+    const serverDataState=getServerData(ctx.chat.id)
     const query=querySerialize({
         multi:Number(multi),
         exdate:exdate,
@@ -132,11 +137,11 @@ const generateUser =async (multi,exdate,count,ip,token) => {
         server:'localhost',
     });
     try {
-        const request=await f(`http://${ip}/user-gen?`+query,{
+        const request=await f(`http://${serverDataState.ip}/user-gen?`+query,{
             method:'POST',
             headers:{
                 'Content-Type':'application/json',
-                Authorization:`Bearer ${token}`
+                Authorization:`Bearer ${serverDataState.token}`
             },
         })
         const response=await request.json();
@@ -152,13 +157,14 @@ const generateUser =async (multi,exdate,count,ip,token) => {
     }
 }
 
-const deleteUser = async (ip,token,username) => {
+const deleteUser = async (ctx,username) => {
+    const serverDataState=getServerData(ctx.chat.id)
     const query=querySerialize({username:username,server:'localhost'})
     try {
-        const request=await f(`http://${ip}/user-delete?`+query,{
+        const request=await f(`http://${serverDataState.ip}/user-delete?`+query,{
             headers:{
                 'Content-Type':'application/json',
-                Authorization:`Bearer ${token}`
+                Authorization:`Bearer ${serverDataState.token}`
             },
         })
         const response=await request.json();
@@ -169,13 +175,14 @@ const deleteUser = async (ip,token,username) => {
 
 }
 
-const unlockUser = async (ip,token,username) => {
+const unlockUser = async (ctx,username) => {
+    const serverDataState=getServerData(ctx.chat.id)
     const query=querySerialize({status :'unlock',username:username,server:'localhost'})
     try {
-        const request=await f(`http://${ip}/user-change-status?`+query,{
+        const request=await f(`http://${serverDataState.ip}/user-change-status?`+query,{
             headers:{
                 'Content-Type':'application/json',
-                Authorization:`Bearer ${token}`
+                Authorization:`Bearer ${serverDataState.token}`
             },
         })
         const response=await request.json();
@@ -185,13 +192,14 @@ const unlockUser = async (ip,token,username) => {
     }
 
 }
-const lockUser = async (ip,token,username) => {
+const lockUser = async (ctx,username) => {
+    const serverDataState=getServerData(ctx.chat.id)
     const query=querySerialize({status :'lock',username:username,server:'localhost'})
     try {
-        const request=await f(`http://${ip}/user-change-status?`+query,{
+        const request=await f(`http://${serverDataState.ip}/user-change-status?`+query,{
             headers:{
                 'Content-Type':'application/json',
-                Authorization:`Bearer ${token}`
+                Authorization:`Bearer ${serverDataState.token}`
             },
         })
         const response=await request.json();
@@ -203,13 +211,14 @@ const lockUser = async (ip,token,username) => {
 }
 
 
-const resetPassword = async (ip,token,username,new_pass) => {
+const resetPassword = async (ctx,username,new_pass) => {
+    const serverDataState=getServerData(ctx.chat.id)
     const query=querySerialize({mode:'users',username:username,server:'localhost',passwd:new_pass})
     try {
-        const request=await f(`http://${ip}/user-change-passwd?`+query,{
+        const request=await f(`http://${serverDataState.ip}/user-change-passwd?`+query,{
             headers:{
                 'Content-Type':'application/json',
-                Authorization:`Bearer ${token}`
+                Authorization:`Bearer ${serverDataState.token}`
             },
         })
         const response=await request.json();
@@ -219,13 +228,14 @@ const resetPassword = async (ip,token,username,new_pass) => {
     }
 
 }
-const createAdmin = async (ip,token,username,pass,role) => {
+const createAdmin = async (ctx,username,pass,role) => {
+    const serverDataState=getServerData(ctx.chat.id)
     const query=querySerialize({username:username,passwd:pass,role:Number(role)});
     try {
-        const request=await f(`http://${ip}/panel/create/?`+query,{
+        const request=await f(`http://${serverDataState.ip}/panel/create/?`+query,{
             headers:{
                 'Content-Type':'application/json',
-                Authorization:`Bearer ${token}`
+                Authorization:`Bearer ${serverDataState.token}`
             },
         })
         const response=await request.json();
@@ -236,13 +246,14 @@ const createAdmin = async (ip,token,username,pass,role) => {
 
 }
 
-const deleteAdminUser = async (ip,token,username) => {
+const deleteAdminUser = async (ctx,username) => {
+    const serverDataState=getServerData(ctx.chat.id)
     const query=querySerialize({username:username})
     try {
-        const request=await f(`http://${ip}/panel/delete/?`+query,{
+        const request=await f(`http://${serverDataState.ip}/panel/delete/?`+query,{
             headers:{
                 'Content-Type':'application/json',
-                Authorization:`Bearer ${token}`
+                Authorization:`Bearer ${serverDataState.token}`
             },
         })
         const response=await request.json();
@@ -254,13 +265,14 @@ const deleteAdminUser = async (ip,token,username) => {
 }
 
 
-const changeMulti=async (ip,token,username,new_multi)=>{
+const changeMulti=async (ctx,username,new_multi)=>{
+    const serverDataState=getServerData(ctx.chat.id)
     const query=querySerialize({username:username,multi:Number(new_multi)})
     try {
-        const request=await f(`http://${ip}/user-change-multi?`+query,{
+        const request=await f(`http://${serverDataState.ip}/user-change-multi?`+query,{
             headers:{
                 'Content-Type':'application/json',
-                Authorization:`Bearer ${token}`
+                Authorization:`Bearer ${serverDataState.token}`
             },
         })
         const response=await request.json();
@@ -271,13 +283,14 @@ const changeMulti=async (ip,token,username,new_multi)=>{
 
 }
 
-const getIPRequest=async (ip,token,username,new_multi)=>{
+const getIPRequest=async (ctx,username,new_multi)=>{
+    const serverDataState=getServerData(ctx.chat.id)
     const query=querySerialize({username:username,multi:Number(new_multi)})
     try {
-        const request=await f(`http://${ip}/user-active-ip?`+query,{
+        const request=await f(`http://${serverDataState.ip}/user-active-ip?`+query,{
             headers:{
                 'Content-Type':'application/json',
-                Authorization:`Bearer ${token}`
+                Authorization:`Bearer ${serverDataState.token}`
             },
         })
         const response=await request.json();

@@ -1,5 +1,4 @@
 const {generateUser,generateCommands}=require('./utils')
-const {serverData} = require("./addServer");
 const {resetAllStates, getThreeQuestionState} = require("./states");
 const {resetAllAnswers, getThreeAnswersState} = require("./answers");
 
@@ -21,7 +20,7 @@ const generateUserProcess = async (ctx,txt) => {
     }else if(threeAnswerState.first && threeAnswerState.second && !threeQuestionState.first && !threeQuestionState.second && !threeQuestionState.third){
         /// count
         threeAnswerState.third=txt;
-        const generatedUser=await generateUser(threeAnswerState.first,threeAnswerState.second,threeAnswerState.third,serverData.ip,serverData.token);
+        const generatedUser=await generateUser(threeAnswerState.first,threeAnswerState.second,threeAnswerState.third,ctx);
         if(generatedUser){
             await ctx.reply(`✅ users generated successfully!\n\n`+generatedUser)
             await generateCommands(ctx)

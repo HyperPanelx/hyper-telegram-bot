@@ -1,5 +1,4 @@
 const {changeMulti,generateCommands}=require('./utils')
-const {serverData} = require("./addServer");
 const {resetAllStates, getTwoQuestionState}=require('./states')
 const {resetAllAnswers, getTwoAnswersState}=require('./answers')
 
@@ -17,7 +16,7 @@ const changeMultiProcess = async (ctx,txt) => {
     }else if( twoAnswersState.first && !twoQuestionState.first && !twoQuestionState.second){
         /// new multi
         twoAnswersState.second=txt
-        const isCreated=await changeMulti(serverData.ip,serverData.token,twoAnswersState.first,twoAnswersState.second);
+        const isCreated=await changeMulti(ctx,twoAnswersState.first,twoAnswersState.second);
         if(isCreated){
             await ctx.reply(`✅ user multi changed successfully!`);
             await generateCommands(ctx);

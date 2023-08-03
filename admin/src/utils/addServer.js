@@ -3,12 +3,24 @@ const adminModel = require("../models/Admin");
 const {resetAllStates,getFourQuestionState}=require('./states')
 const {resetAllAnswers,getFourAnswersState}=require('./answers')
 const f = require("node-fetch");
-//// server
-const serverData={
-    ip:null,
-    token:null
-}
 
+const serverData = {}
+const getServerData = (chatId) => {
+    let userData = serverData[chatId];
+    if (!userData) {
+        userData = {
+            ip:'',
+            token:''
+        }
+        serverData[chatId] = userData
+    }
+    return userData
+}
+const resetServerData = (chatId) => {
+    const serverData=getServerData(chatId);
+    serverData.ip=''
+    serverData.token=''
+}
 
 const urlEncode = (obj) => {
     const toArray=Object.entries(obj);
@@ -82,5 +94,5 @@ const addServerProcess = async (ctx,txt) => {
 }
 
 module.exports={
-    serverData,addServerProcess
+    serverData,addServerProcess,getServerData,resetServerData
 }

@@ -1,5 +1,4 @@
 const {deleteAdminUser, generateCommands}=require('./utils')
-const {serverData} = require("./addServer");
 const {resetAllStates}=require('../utils/states')
 const {resetAllAnswers}=require('../utils/answers')
 const {getOneQuestionState} = require("./states");
@@ -12,7 +11,7 @@ const deleteAdminUserProcess = async (ctx,txt) => {
   if(oneQuestionState&&oneQuestionState.first){
       /// username
       oneAnswerState.first=txt
-      const isDeleted=await deleteAdminUser(serverData.ip,serverData.token,oneAnswerState.first);
+      const isDeleted=await deleteAdminUser(ctx,oneAnswerState.first);
       if(isDeleted){
           await ctx.reply(`✅ admin user deleted successfully!`)
           await generateCommands(ctx)

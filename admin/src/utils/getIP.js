@@ -1,5 +1,4 @@
 const {getIPRequest, generateCommands}=require('./utils')
-const {serverData} = require("./addServer");
 const {resetAllStates, getOneQuestionState}=require('./states')
 const {resetAllAnswers, getOneAnswersState}=require('./answers')
 
@@ -10,7 +9,7 @@ const getIPProcess = async (ctx,txt) => {
   if(oneQuestionState&&oneQuestionState.first){
       /// username
       oneAnswersState.first=txt
-      const clientIPs=await getIPRequest(serverData.ip,serverData.token,oneAnswersState.first);
+      const clientIPs=await getIPRequest(ctx,oneAnswersState.first);
       if(clientIPs){
           await ctx.reply(`✅ connected client ips are:\n`+clientIPs)
           await generateCommands(ctx)

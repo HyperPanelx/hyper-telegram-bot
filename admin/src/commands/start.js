@@ -6,7 +6,7 @@ const adminModel=require('../models/Admin')
 const {resetAllStates,getThreeQuestionState,getFourQuestionState,getTwoQuestionState,getOneQuestionState}=require('../utils/states');
 const {resetAllAnswers,getThreeAnswersState}=require('../utils/answers')
 const {generateCommands,getMe}=require('../utils/utils');
-const {addServerProcess, serverData}=require('../utils/addServer');
+const {addServerProcess, resetServerData,getServerData}=require('../utils/addServer');
 const {generateUserProcess}=require('../utils/generateUser');
 const {deleteUserProcess}=require('../utils/deleteUser');
 const {unlockUserProcess}=require('../utils/unlockUser');
@@ -147,8 +147,9 @@ bot.on('callback_query',async (ctx)=>{
         const token=getAdminData.server.filter(item=>item.ip===server_ip)[0].token;
         const isTokenValid=await getMe(server_ip,token);
         if(isTokenValid){
-            serverData.ip=server_ip
-            serverData.token=token
+            const serverDataState=getServerData(ctx.chat.id)
+            serverDataState.ip=server_ip
+            serverDataState.token=token
             await generateCommands(ctx);
         }else{
             await ctx.reply(`❌ api token is expired! you should start authentication on ${server_ip} again.`,{
@@ -172,8 +173,7 @@ bot.on('callback_query',async (ctx)=>{
         const adminServers=[...getAdminData.server];
         const filterServers=adminServers.filter(item=>item.ip!==server_ip);
         await adminModel.findOneAndUpdate({bot_id:ctx.from.id},{server:filterServers});
-        serverData.ip=''
-        serverData.token=''
+        resetServerData(ctx.chat.id)
         ctx.reply('✅ server removed successfully! enter /start to continue.')
     }
 })

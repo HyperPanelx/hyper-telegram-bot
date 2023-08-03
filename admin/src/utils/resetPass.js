@@ -1,5 +1,4 @@
 const {generateCommands,resetPassword}=require('./utils')
-const {serverData} = require("./addServer");
 const {resetAllStates,getTwoQuestionState}=require('./states')
 const {resetAllAnswers, getTwoAnswersState}=require('./answers')
 
@@ -16,7 +15,7 @@ const resetUserPassProcess = async (ctx,txt) => {
     }else if( twoAnswersState.first && !twoQuestionState.first && !twoQuestionState.second){
         /// new pass
         twoAnswersState.second=txt
-        const isPasswordReset=await resetPassword(serverData.ip,serverData.token,twoAnswersState.first,twoAnswersState.second);
+        const isPasswordReset=await resetPassword(ctx,twoAnswersState.first,twoAnswersState.second);
         if(isPasswordReset){
             await ctx.reply(`✅ user's password changed successfully!`)
             await generateCommands(ctx)

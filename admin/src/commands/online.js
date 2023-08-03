@@ -1,11 +1,10 @@
 const {bot}=require('../bot.config');
 const {commandValidation,getOnlineUsersList,generateCommands}=require('../utils/utils')
-const {serverData}=require('../utils/addServer')
 
 
 bot.command('online',async (ctx)=>{
     await commandValidation(async ()=>{
-        const onlineUsersList=await getOnlineUsersList(serverData.ip,serverData.token);
+        const onlineUsersList=await getOnlineUsersList(ctx);
         if(onlineUsersList){
             await ctx.reply('✅ online users:\n\n'+onlineUsersList)
             await generateCommands(ctx);
