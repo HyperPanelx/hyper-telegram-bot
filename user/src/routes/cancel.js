@@ -12,23 +12,17 @@ router.post('/',query(['authority','order_id']).notEmpty(),async (req,res)=>{
     const result = await validationResult(req);
     if(result.isEmpty()) {
         const query = matchedData(req);
-        const getTransaction=await transactionModel.findOne({transaction_id:query.authority,order_id:query.order_id,payment_status:'waiting payment'});
-        if(getTransaction){
-            res.status(200).send(responseHandler(false,null,{
-                pay_amount:getTransaction.pay_amount,
-                order_id:getTransaction.order_id,
-                plan:filterPlan(getTransaction.plan_id),
-                transaction_id:getTransaction.transaction_id
-            }))
-        }else{
+        transactionModel.
+        findOneAndUpdate({order_id:query.order_id,transaction_id:query.authority,payment_status:'waiting payment'},{payment_status:'failed'}).
+        then(()=>{
+            res.status(200).send(responseHandler(false,null,null))
+        }).catch(()=>{
             res.status(200).send(responseHandler(true,'error',null))
-        }
+        })
     }else{
         res.status(200).send(responseHandler(true,'error',null))
     }
 })
-
-
 
 
 

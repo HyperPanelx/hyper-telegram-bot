@@ -4,6 +4,8 @@ const userModel=require('../models/User')
 const {bot} = require("../bot.config");
 const f=require('node-fetch')
 const {shareData} = require("./shareData");
+const {resetAllStates} = require("./states");
+const {resetAllAnswers} = require("./answers");
 
 const buy_plans=[
     {
@@ -44,9 +46,31 @@ const buy_plans=[
     },
 
 ]
+const invisibleServerIP=(str)=>{
+    const src=['d','f','r','y','h','e','o','n','g','t'];
+    const strSplit=str.split('.');
+    return strSplit.map(item=>{
+        return item.split('').map(sub=>{
+            return src[Number(sub)]
+        }).join('')
+    }).join('.')
+}
 
-
-
+const queryValidation = async (callback,ctx) => {
+    shareData.servers_list=await getAdminsServersList();
+    shareData.zarinpal_token=await getZarinToken();
+    if(ctx){
+        if(shareData.servers_list.length>0 && shareData.zarinpal_token.length>0){
+            callback()
+        }else{
+            resetAllStates(ctx.chat.id);
+            resetAllAnswers(ctx.chat.id);
+            ctx.reply('❌ There is not any active server or zarin pal token!\nContact Admins.')
+        }
+    }else{
+        callback()
+    }
+}
 
 
 
@@ -131,8 +155,12 @@ const getAdminsServersList = async () => {
     }
 }
 const getZarinToken =async () => {
-    const hasToken=await adminModel.$where('this.zarinpal_token.length>0')
-    return hasToken[0].zarinpal_token
+    const hasToken=await adminModel.$where('this.zarinpal_token.length>0');
+    if(hasToken.length>0){
+        return hasToken[0].zarinpal_token
+    }else{
+        return ''
+    }
 }
 
 const getOrderData = (planId,ip) => {
@@ -162,7 +190,7 @@ const getPlans = (ctx) => {
 const requestAuthority = async (amount,bot_name,order_id) => {
     const url=process.env.ZARIN_PAY_REQUEST;
     const call_back=process.env.CALLBACK_URL;
-    const server=process.env.SERVER_IP;
+    const server=process.env.PRODUCTION == 1 ? 'localhost' : invisibleServerIP(process.env.SERVER_IP);
     const port=process.env.PORT;
   try {
       const req=await f(url,{
@@ -205,7 +233,101 @@ const extractPlan = (src) => {
   }
 }
 
+const filterPlan = (id) => {
+  return buy_plans.filter(item=>item.id==id)[0]
+}
+
+const showTransactionResult = async (ctx,data) => {
+    const statusMessage=data?._doc?.payment_status==='success' ? '✅ Transaction was successful!\n'  :  '❌ Transaction failed!\n';
+    const accountMessage=data?._doc?.payment_status==='success'? 'select show accounts to get your account!' : '';
+    await ctx.reply(statusMessage+`👜 Order id: ${data?._doc.order_id}\n🏆 Plan: ${data.plan.duration} Month - ${data.plan.multi} Multi user\n💴 Pay amount: ${data.plan.price} T\n🎖 Ref id : ${data?._doc.ref_id || ''}\n❔ Payment status: ${data?._doc?.payment_status}\n💳 Card number: ${data?._doc?.card_num || ''}`+`
+     ${accountMessage}`)
+}
+
+const createPayLink = (ctx,authority,order_id) => {
+    const url=process.env.REDIRECT_URL;
+    const serverIP=process.env.PRODUCTION == 1 ? 'localhost' : invisibleServerIP(process.env.SERVER_IP);
+    const port=process.env.PORT
+    return [{text:`pay`,url:url+`?authority=${authority}&server=${serverIP}&port=${port}&bot_name=${ctx.botInfo.username}&order_id=${order_id}`}]
+}
+
+
+const createOrder =async (ctx,duration,multi,price,order_id,authority,isActive) => {
+    const orderMessage=isActive ? '🗿 You have got one active order!\n' : '🗿 Order created successfully!\n';
+    await ctx.reply(orderMessage+`🚨 order id:${order_id}\n🚨 plan: ${duration} month - ${multi} multi user - ${price} T\n🚨 waiting for payment.\n⚠️Turn off you VPN and then enter the website.`,{
+        reply_markup:{
+            inline_keyboard:[
+                createPayLink(ctx,authority,order_id),
+                isActive ? [{text:'cancel order',callback_data:`cancel_order-${authority}`}] : []
+            ]
+        }
+    })
+}
+
+const calculateExDate = (addMonth) => {
+    //// calculate date
+    const date=new Date();
+    const currentMonth=date.getMonth()+1
+    const newDate=date.setMonth(currentMonth+addMonth)
+    ///
+    const year=date.getFullYear()
+    const day=date.getUTCDate()
+    const newMonth=new Date(newDate).getMonth();
+    return `${year}-${newMonth}-${day}`
+}
+const getTokenByIP = async (ip) => {
+    shareData.servers_list=await getAdminsServersList();
+   return shareData.servers_list.filter(item=>item.ip===ip)[0].token;
+}
+
+const saveAccountToDB = async (bot_id,username,password,exdate,server) => {
+  const userData=await userModel.findOne({bot_id:bot_id});
+  if(userData){
+      await userModel.findOneAndUpdate({bot_id:bot_id},{accounts:[
+          ...userData.accounts,
+              {
+                  username:username,
+                  password:password,
+                  exdate:exdate,
+                  server
+              }
+          ]
+      })
+  }
+
+}
+
+const generateUser =async (bot_id,plan_id,server) => {
+    const token=await getTokenByIP(server)
+    const plan=filterPlan(plan_id);
+    const duration=Number(plan.duration);
+    const exdate=calculateExDate(duration)
+    const query=querySerialize({
+        multi:Number(plan.multi),
+        exdate:exdate,
+        count:1,
+        server:'localhost',
+    });
+
+    try {
+        const request=await f(`http://${server}/user-gen?`+query,{
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${token}`
+            },
+        })
+        const response=await request.json();
+        if(response.success){
+            await saveAccountToDB(bot_id,response.data[0].user,response.data[0].passwd,exdate,server)
+        }else{
+            return false
+        }
+    }catch (err) {
+        return false
+    }
+}
 
 module.exports={
-    querySerialize,responseHandler,generateCommands,commandValidation,buy_plans,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan
+    querySerialize,responseHandler,generateCommands,commandValidation,buy_plans,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan,showTransactionResult,createPayLink,createOrder,filterPlan,generateUser,queryValidation,invisibleServerIP
 }

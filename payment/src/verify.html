@@ -1,49 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <title>HYPER</title>
 </head>
 <body>
-    <h1>در حال انتقال به ربات تلگرام</h1>
-    <button id="btn_1">
-        redirect
-    </button>
+<h3 class="text-center mt-2" id="loader">لطفا چند لحظه صبر کنید...</h3>
 
-<script >
-    const params = new Proxy(new URLSearchParams(window.location.search), {
-        get: (searchParams, prop) => searchParams.get(prop),
-    });
+    <div id="container" class="container mt-5">
 
-  const submit_payment = () => {
-      const {server,port,Authority,Status,bot_name}=params;
-      if(server && port && Authority && Status && bot_name){
-          fetch(`http://${server}:${port}/verify?authority=${Authority}&status=${Status}`,{
-              method:'POST',
-              headers:{
-                  'Content-Type':'application/json'
-              }
-          }).then(res=>res.json()).then(response=>{
-              if(response.error){
-                  window.location='https://t.me/'+bot_name+`?start=failed${Authority}`
-              }else{
-                  window.location='https://t.me/'+bot_name+`?start=${Authority}`
-              }
-          }).catch(err=>{
-              window.location='https://t.me/'+bot_name+`?start=failed${Authority}`
-          })
-      }else{
-          window.location='https://t.me/'+bot_name+`?start=failed`+Authority
-      }
+    </div>
 
-  }
-
-
-
-    window.addEventListener('load',submit_payment)
-    document.querySelector('#btn_1').addEventListener('click',submit_payment)
-</script>
-
+<script src="./verify.js" type="module"></script>
 
 </body>
 </html>

@@ -1,4 +1,4 @@
-const {extractIps, getServerLocation, generateCommands, getOrderData, requestAuthority} = require("./utils");
+const {extractIps, getServerLocation, generateCommands, getOrderData, requestAuthority,createPayLink,createOrder} = require("./utils");
 const {shareData} = require("./shareData");
 const {resetAllStates, getTwoQuestionState} = require("./states");
 const {resetAllAnswers, getTwoAnswersState} = require("./answers");
@@ -57,23 +57,15 @@ const selectServersProcess = async (ctx,query) => {
             payment_status:'waiting payment',
             card_num:'',ref_id:''
         });
-        newTransaction.save().then(()=>{
-            ctx.reply(`🗿 Order created successfully!\n🚨 order id:${order_id}\n🚨 plan: ${order_data.plan.duration} month - ${order_data.plan.multi} multi user - ${order_data.plan.price} T\n🚨 waiting for payment.`,{
-                reply_markup:{
-                    inline_keyboard:[
-                        [{text:`pay`,url:process.env.REDIRECT_URL+`?authority=${authority}&server=${process.env.SERVER_IP}&port=${process.env.PORT}&bot_name=${ctx.botInfo.username}&order_id=${order_id}`}]
-                    ]
-                }
-            })
+        newTransaction.save().then(async ()=>{
+            await createOrder(ctx,order_data.plan.duration,order_data.plan.multi,order_data.plan.price,order_id,authority,false)
         })
-        resetAllStates(ctx.chat.id)
-        resetAllAnswers(ctx.chat.id)
     }else{
         ctx.reply('❌ sorry but there is something wrong with zarin pal.')
         await generateCommands(ctx)
-        resetAllStates(ctx.chat.id)
-        resetAllAnswers(ctx.chat.id)
     }
+    resetAllStates(ctx.chat.id)
+    resetAllAnswers(ctx.chat.id)
 }
 
 

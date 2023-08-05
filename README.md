@@ -1,4 +1,4 @@
-<h1 style="display: flex;align-items: center; gap:1rem"><img src="./preview/logo-sm.png"/> Hyper Admin Panel Telegram robot </h1>  
+<h1 style="display: flex;align-items: center; gap:1rem"><img src="./logo-sm.png"/> Hyper Admin Panel Telegram robot </h1>  
 <a href='https://github.com/hoomanFsmo77/Hyper-admin-panel/tree/master/frontend' target="_blank"><img alt='' src='https://img.shields.io/badge/Release_V1.2.1-100000?style=flat&logo=&logoColor=3178C6&labelColor=333333&color=333333'/></a>
 
 ## Tech
