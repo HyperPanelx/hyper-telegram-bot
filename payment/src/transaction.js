@@ -67,6 +67,25 @@ const generatePaymentData = (order_id,duration,multi,price,authority,server,port
     document.querySelector('#cancel').addEventListener('click',cancelPayment);
 }
 
+
+const generateError = (msg,bot_name,authority) => {
+    const el=` <div class="row justify-content-center ">
+            <div class="col col-md-5 col-12 ">
+                <div class="card p-3">
+                    <h5 class="text-center mb-2">${msg}</h5>
+                       <div  class="mt-1 text-center">
+                        <button data-transaction="${authority}" data-bot="${bot_name}"  id="back-to-bot" class="btn btn-primary">
+                             بازگشت به ربات تلگرام
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    wait.style.display='none'
+    container.insertAdjacentHTML('beforeend',el);
+    document.querySelector('#back-to-bot').addEventListener('click',backToBot);
+}
+
 const redirectToPay = (ev) => {
   const authority=ev.target.dataset.transaction;
     if(authority){
@@ -74,9 +93,13 @@ const redirectToPay = (ev) => {
     }
 }
 
+const backToBot = (ev) => {
+  const {bot,transaction}=ev.target.dataset;
+    window.location='https://t.me/'+bot+"?start="+transaction
+}
+
 const cancelPayment = (ev) => {
     const {transaction, order, server, port, bot}=ev.target.dataset
-
     fetch(`http://${server}:${port}/cancel?authority=${transaction}&order_id=${order}`,{
         method:'POST',
         headers:{
@@ -92,7 +115,6 @@ const cancelPayment = (ev) => {
 
 const getInitialData = () => {
     const{authority,server,port,bot_name,order_id}=params;
-    console.log(visibleServer(server))
     if(authority && server && port && bot_name && order_id){
         const ip=server==='localhost' ? 'localhost' :visibleServer(server);
         fetch(`http://${ip}:${port}/transactions?authority=${authority}&order_id=${order_id}`,{
@@ -101,14 +123,12 @@ const getInitialData = () => {
                 'Content-Type':'application/json'
             }
         }).then(response=>response.json()).then(response=>{
-            console.log(response)
             if(response.error){
-                window.location='https://t.me/'+bot_name+"?start="+authority
+                generateError(response.msg,bot_name,authority)
             }else{
                 const {order_id,plan:{duration,multi,price},transaction_id}=response.data;
                 generatePaymentData(order_id,duration,multi,price,transaction_id,ip,port,bot_name);
             }
-
         }).catch(err=>{
             window.location='https://t.me/'+bot_name+"?start="+authority
         })

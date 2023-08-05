@@ -5,7 +5,6 @@ const cors=require('cors')
 const app=express()
 const database=require('./database')
 const bot=require('./bot.config')
-const {invisibleServerIP}=require('./utils/utils')
 ///////
 app.use(bodyParser.json());
 app.use(cors())

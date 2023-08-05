@@ -127,6 +127,21 @@ const extractIps = (server) => {
 }
 
 
+const removeDuplicate = (arr) => {
+    const uniqueServers = [];
+    return  arr.filter(element => {
+        const isDuplicate = uniqueServers.includes(element.ip);
+
+        if (!isDuplicate) {
+            uniqueServers.push(element.ip);
+
+            return true;
+        }
+
+        return false;
+    });
+}
+
 
 
 const getAdminsServersList = async () => {
@@ -149,7 +164,7 @@ const getAdminsServersList = async () => {
                 })
             }
         });
-        return edit2.flat()
+        return removeDuplicate(edit2.flat())
     }else{
         return  [];
     }
@@ -190,7 +205,7 @@ const getPlans = (ctx) => {
 const requestAuthority = async (amount,bot_name,order_id) => {
     const url=process.env.ZARIN_PAY_REQUEST;
     const call_back=process.env.CALLBACK_URL;
-    const server=process.env.PRODUCTION == 1 ? 'localhost' : invisibleServerIP(process.env.SERVER_IP);
+    const server=process.env.PRODUCTION == 1 ? invisibleServerIP(process.env.SERVER_IP) : 'localhost';
     const port=process.env.PORT;
   try {
       const req=await f(url,{
@@ -246,7 +261,7 @@ const showTransactionResult = async (ctx,data) => {
 
 const createPayLink = (ctx,authority,order_id) => {
     const url=process.env.REDIRECT_URL;
-    const serverIP=process.env.PRODUCTION == 1 ? 'localhost' : invisibleServerIP(process.env.SERVER_IP);
+    const serverIP=process.env.PRODUCTION == 1 ? invisibleServerIP(process.env.SERVER_IP) : 'localhost';
     const port=process.env.PORT
     return [{text:`pay`,url:url+`?authority=${authority}&server=${serverIP}&port=${port}&bot_name=${ctx.botInfo.username}&order_id=${order_id}`}]
 }
@@ -329,5 +344,5 @@ const generateUser =async (bot_id,plan_id,server) => {
 }
 
 module.exports={
-    querySerialize,responseHandler,generateCommands,commandValidation,buy_plans,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan,showTransactionResult,createPayLink,createOrder,filterPlan,generateUser,queryValidation,invisibleServerIP
+    querySerialize,responseHandler,generateCommands,commandValidation,buy_plans,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan,showTransactionResult,createPayLink,createOrder,filterPlan,generateUser,queryValidation,invisibleServerIP,removeDuplicate
 }

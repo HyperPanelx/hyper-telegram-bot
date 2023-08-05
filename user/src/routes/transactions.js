@@ -21,7 +21,7 @@ router.post('/',query(['authority','order_id']).notEmpty(),async (req,res)=>{
                 transaction_id:getTransaction.transaction_id
             }))
         }else{
-            res.status(200).send(responseHandler(true,'error',null))
+            res.status(200).send(responseHandler(true,'❌ این تراکنش قبلا پردازش شده است!',null))
         }
     }else{
         res.status(200).send(responseHandler(true,'error',null))
