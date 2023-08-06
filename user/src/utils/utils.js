@@ -1,51 +1,27 @@
 require('dotenv').config()
 const adminModel=require('../models/Admin')
 const userModel=require('../models/User')
-const {bot} = require("../bot.config");
 const f=require('node-fetch')
 const {shareData} = require("./shareData");
 const {resetAllStates} = require("./states");
 const {resetAllAnswers} = require("./answers");
+const planModel=require('../models/Plan')
 
-const buy_plans=[
-    {
-        id:1,
-        duration:1,
-        multi:1,
-        price:100
-    },
-    {
-        id:2,
-        duration:1,
-        multi:2,
-        price:150
-    },
-    {
-        id:3,
-        duration:1,
-        multi:3,
-        price:250
-    },
-    {
-        id:4,
-        duration:3,
-        multi:1,
-        price:250
-    },
-    {
-        id:5,
-        duration:3,
-        multi:2,
-        price:350
-    },
-    {
-        id:6,
-        duration:3,
-        multi:3,
-        price:550
-    },
 
-]
+
+const getPlanFromDB =async () => {
+  const plans=await planModel.find({});
+  return plans.map(item=>{
+      return {
+          id:item.plan_id,
+          duration:item.duration,
+          multi:item.multi,
+          price:item.price
+      }
+  })
+}
+
+
 const invisibleServerIP=(str)=>{
     const src=['d','f','r','y','h','e','o','n','g','t'];
     const strSplit=str.split('.');
@@ -56,16 +32,19 @@ const invisibleServerIP=(str)=>{
     }).join('.')
 }
 
-const queryValidation = async (callback,ctx) => {
+const queryValidation = async (callback,ctx,needReset,needValidation) => {
+    if(needReset ){
+        resetAllStates(ctx.chat.id);
+        resetAllAnswers(ctx.chat.id);
+    }
     shareData.servers_list=await getAdminsServersList();
     shareData.zarinpal_token=await getZarinToken();
-    if(ctx){
-        if(shareData.servers_list.length>0 && shareData.zarinpal_token.length>0){
+    shareData.plans=await getPlanFromDB();
+    if(needValidation){
+        if(shareData.servers_list.length>0 && shareData.zarinpal_token.length>0 && shareData.plans.length>0){
             callback()
         }else{
-            resetAllStates(ctx.chat.id);
-            resetAllAnswers(ctx.chat.id);
-            ctx.reply('❌ There is not any active server or zarin pal token!\nContact Admins.')
+            ctx.reply('❌ جهت خرید اکانت نیاز به درگاه پرداخت , سرور فعال و پلن می باشد.\n جهت رفع مشکل لطفا این را به ادمین ها اطلاع دهید.')
         }
     }else{
         callback()
@@ -89,13 +68,15 @@ const responseHandler = (error,msg,data) => {
 
 
 
-const generateCommands = (ctx) => {
-    ctx.reply(`⚒ Our services:`,{
+const generateCommands =async (ctx) => {
+    await ctx.reply(`⚙️ منو کاربری:\nیک گزینه را انتخاب کنید.\n@${ctx.botInfo.username}`,{
       reply_markup:{
           inline_keyboard:[
-              [{text:'🥇 buy account',callback_data:'buy_account'}],
-              [{text:'🥈 show accounts',callback_data:'show_account'}],
-              [{text:'🥉 show transactions',callback_data:'show_transactions'}],
+              [{text:' 📱 خرید اکانت',callback_data:'buy_account'}],
+              [{text:'📡 نمایش اکانت ها',callback_data:'show_account'}],
+              [{text:'💶 نمایش تراکنش های مالی',callback_data:'show_transactions'}],
+              [{text:'🎫 ارسال تیکت',callback_data:'send_ticket'}],
+              [{text:'👀 مشاهده تیکت ها',callback_data:'show_ticket'}],
           ]
       }
   })
@@ -106,10 +87,7 @@ const getServerLocation = async (servers) => {
     return await Promise.all(promises.map(p => p.json()))
 }
 
-const commandValidation = async (callback,chatId,userId) => {
 
-
-}
 
 const extractIps = (server) => {
     if(server.length>0){
@@ -178,22 +156,23 @@ const getZarinToken =async () => {
     }
 }
 
-const getOrderData = (planId,ip) => {
+const getOrderData =  (planId,ip) => {
   const data={
       plan:null,
       server:null
   };
-  data.plan=buy_plans.filter(item=>item.id==planId)[0];
+  data.plan=shareData.plans.filter(item=>item.id==planId)[0];
   data.server=shareData.servers_list.filter(item=>item.ip.includes(ip))[0];
     return data
 }
 
 
-const getPlans = (ctx) => {
-    const plans=buy_plans.map(item=>{
-        return [{text:`👜 ${item.duration} Month - ${item.multi} multi user - unlimited - ${item.price} T`,callback_data:`select_plan-${item.id}`}]
+const getPlans = async (ctx) => {
+    await ctx.reply('لطفا چند لحظه صبر کنید...');
+    const plans=shareData.plans.map(item=>{
+        return [{text:`👜 ${item.duration} ماه - ${item.multi} کاربر همزمان - حجم نامحدود - ${item.price} هزار تومان`,callback_data:`select_plan-${item.id}`}]
     })
-    ctx.reply('✅ Our available plans.\n❔ Choose a plan:',{
+    await ctx.reply('✅ در حال حاضر پلن های زیر موجود می باشد.\nجهت انتخاب روی یکی از گزینه های زیر کلیک نمایید:',{
         reply_markup:{
             inline_keyboard:[
                 ...plans
@@ -236,7 +215,7 @@ const transformPlanId = (source) => {
   return source.map(item=>{
       return {
           ...item,
-          plan_id:buy_plans[item.plan_id-1]
+          plan_id:shareData.plans[item.plan_id-1]
       }
   })
 }
@@ -244,18 +223,18 @@ const transformPlanId = (source) => {
 const extractPlan = (src) => {
   return {
       ...src,
-      plan:buy_plans[src.plan_id-1]
+      plan:shareData.plans[src.plan_id-1]
   }
 }
 
 const filterPlan = (id) => {
-  return buy_plans.filter(item=>item.id==id)[0]
+  return shareData.plans.filter(item=>item.id==id)[0]
 }
 
 const showTransactionResult = async (ctx,data) => {
-    const statusMessage=data?._doc?.payment_status==='success' ? '✅ Transaction was successful!\n'  :  '❌ Transaction failed!\n';
-    const accountMessage=data?._doc?.payment_status==='success'? 'select show accounts to get your account!' : '';
-    await ctx.reply(statusMessage+`👜 Order id: ${data?._doc.order_id}\n🏆 Plan: ${data.plan.duration} Month - ${data.plan.multi} Multi user\n💴 Pay amount: ${data.plan.price} T\n🎖 Ref id : ${data?._doc.ref_id || ''}\n❔ Payment status: ${data?._doc?.payment_status}\n💳 Card number: ${data?._doc?.card_num || ''}`+`
+    const statusMessage=data?._doc?.payment_status==='success' ? '✅ تراکنش شما با موفقیت انجام شد.\n'  :  '❌ متاسفانه تراکنش شما ناموفق بود.\n';
+    const accountMessage=data?._doc?.payment_status==='success'? 'جهت دریافت اکانت روی گزینه نمایش اکانت ها کلیک نمایید.' : '';
+    await ctx.reply(statusMessage+`👜 شماره سفارش: ${data?._doc.order_id}\n🏆 اطلاعات اکانت: ${data.plan.duration} ماه - ${data.plan.multi} کاربر همزمان\n💴 مبلغ قابل پرداخت: ${data.plan.price} هزارتومان\n🔑 کد رهگیری زرین پال : ${data?._doc.ref_id || ''}\n❔ وضعیت سفارش: ${data?._doc?.payment_status==='success' ? 'موفق' : 'ناموفق'}\n💳 شماره کارت: ${data?._doc?.card_num || ''}`+`
      ${accountMessage}`)
 }
 
@@ -263,17 +242,17 @@ const createPayLink = (ctx,authority,order_id) => {
     const url=process.env.REDIRECT_URL;
     const serverIP=process.env.PRODUCTION == 1 ? invisibleServerIP(process.env.SERVER_IP) : 'localhost';
     const port=process.env.PORT
-    return [{text:`pay`,url:url+`?authority=${authority}&server=${serverIP}&port=${port}&bot_name=${ctx.botInfo.username}&order_id=${order_id}`}]
+    return [{text:`پرداخت`,url:url+`?authority=${authority}&server=${serverIP}&port=${port}&bot_name=${ctx.botInfo.username}&order_id=${order_id}`}]
 }
 
 
 const createOrder =async (ctx,duration,multi,price,order_id,authority,isActive) => {
-    const orderMessage=isActive ? '🗿 You have got one active order!\n' : '🗿 Order created successfully!\n';
-    await ctx.reply(orderMessage+`🚨 order id:${order_id}\n🚨 plan: ${duration} month - ${multi} multi user - ${price} T\n🚨 waiting for payment.\n⚠️Turn off you VPN and then enter the website.`,{
+    const orderMessage=isActive ? '✅ شما در حال حاضر یک سفارش فعال دارید.\n در صورت تمایل به تغییر سفارش, آنرا لغو و سپس دوباره اقدام به خرید نمایید.\n' : '✅ سفارش شما با موفقیت ایجاد شد!\n';
+    await ctx.reply(orderMessage+`🎫 شماره سفارش: ${order_id}\n⚡️ اطلاعات اکانت: ${duration} ماه - ${multi} کاربر همزمان - ${price} هزار تومان\n🚨 در انتظار پرداخت\n⚠️جهت پرداخت بهتر است فیلترشکن خود را خاموش نمایید.\n⚠️درگاه پرداخت تا ۱۵ دقیقه دیگر فعال است. در صورت غیرفعال شدن درگاه پرداخت, سفارش فعلی را لغو و سفارش جدید ایجاد کنید. `,{
         reply_markup:{
             inline_keyboard:[
                 createPayLink(ctx,authority,order_id),
-                isActive ? [{text:'cancel order',callback_data:`cancel_order-${authority}`}] : []
+                isActive ? [{text:'لغو سفارش',callback_data:`cancel_order-${authority}`}] : []
             ]
         }
     })
@@ -295,7 +274,7 @@ const getTokenByIP = async (ip) => {
    return shareData.servers_list.filter(item=>item.ip===ip)[0].token;
 }
 
-const saveAccountToDB = async (bot_id,username,password,exdate,server) => {
+const saveAccountToDB = async (bot_id,username,password,exdate,server,multi) => {
   const userData=await userModel.findOne({bot_id:bot_id});
   if(userData){
       await userModel.findOneAndUpdate({bot_id:bot_id},{accounts:[
@@ -304,7 +283,7 @@ const saveAccountToDB = async (bot_id,username,password,exdate,server) => {
                   username:username,
                   password:password,
                   exdate:exdate,
-                  server
+                  server,multi
               }
           ]
       })
@@ -317,8 +296,9 @@ const generateUser =async (bot_id,plan_id,server) => {
     const plan=filterPlan(plan_id);
     const duration=Number(plan.duration);
     const exdate=calculateExDate(duration)
+    const multi=Number(plan.multi)
     const query=querySerialize({
-        multi:Number(plan.multi),
+        multi:multi,
         exdate:exdate,
         count:1,
         server:'localhost',
@@ -334,7 +314,7 @@ const generateUser =async (bot_id,plan_id,server) => {
         })
         const response=await request.json();
         if(response.success){
-            await saveAccountToDB(bot_id,response.data[0].user,response.data[0].passwd,exdate,server)
+            await saveAccountToDB(bot_id,response.data[0].user,response.data[0].passwd,exdate,server,multi)
         }else{
             return false
         }
@@ -344,5 +324,5 @@ const generateUser =async (bot_id,plan_id,server) => {
 }
 
 module.exports={
-    querySerialize,responseHandler,generateCommands,commandValidation,buy_plans,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan,showTransactionResult,createPayLink,createOrder,filterPlan,generateUser,queryValidation,invisibleServerIP,removeDuplicate
+    querySerialize,responseHandler,generateCommands,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan,showTransactionResult,createPayLink,createOrder,filterPlan,generateUser,queryValidation,invisibleServerIP,removeDuplicate,getPlanFromDB
 }

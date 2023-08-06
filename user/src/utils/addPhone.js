@@ -9,7 +9,7 @@ const addPhoneProcess = async (ctx,txt) => {
     if(oneQuestionState && oneQuestionState.first){
         oneAnswersState.first=txt
         await userModel.findOneAndUpdate({bot_id:ctx.from.id},{phone:oneAnswersState.first})
-        ctx.reply('✅ phone number added!')
+        ctx.reply('✅ شماره موبایل شما با موفقیت ثبت شد.')
         await generateCommands(ctx)
     }
     resetAllAnswers(ctx.chat.id)

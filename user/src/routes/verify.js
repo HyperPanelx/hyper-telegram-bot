@@ -1,7 +1,7 @@
 const express=require('express')
 const {query, validationResult, matchedData} = require("express-validator");
 const {shareData} = require("../utils/shareData");
-const {getZarinToken, getAdminsServersList, responseHandler, filterPlan,generateUser} = require("../utils/utils");
+const {getZarinToken, getAdminsServersList, responseHandler, filterPlan,generateUser, getPlanFromDB} = require("../utils/utils");
 const transactionModel = require("../models/Transaction");
 const f = require("node-fetch");
 const router=express.Router()
@@ -10,6 +10,7 @@ const router=express.Router()
 router.post('/',query(['authority','status']).notEmpty(),async (req,res)=>{
     shareData.zarinpal_token=await getZarinToken();
     shareData.servers_list=await getAdminsServersList();
+    shareData.plans=await getPlanFromDB();
     const result = await validationResult(req);
     if(result.isEmpty()) {
         const query = matchedData(req);
@@ -48,7 +49,7 @@ router.post('/',query(['authority','status']).notEmpty(),async (req,res)=>{
                         ////verification is not verified
                         transactionModel.
                         findOneAndUpdate({transaction_id:query.authority},{payment_status:'failed'}).
-                        then(()=>{
+                        then(async ()=>{
                             res.status(200).send(responseHandler(false,'❌ این تراکنش از طرف زرین پال معتبر نیست!',{
                                 ref_id:null,
                                 transaction_id:query.authority,

@@ -1,7 +1,7 @@
 const express=require('express')
 const {query, validationResult, matchedData} = require("express-validator");
 const {shareData} = require("../utils/shareData");
-const {getZarinToken, getAdminsServersList, responseHandler,filterPlan} = require("../utils/utils");
+const {getZarinToken, getAdminsServersList, responseHandler,filterPlan, getPlanFromDB} = require("../utils/utils");
 const transactionModel = require("../models/Transaction");
 const router=express.Router()
 
@@ -9,6 +9,7 @@ const router=express.Router()
 router.post('/',query(['authority','order_id']).notEmpty(),async (req,res)=>{
     shareData.zarinpal_token=await getZarinToken();
     shareData.servers_list=await getAdminsServersList();
+    shareData.plans=await getPlanFromDB();
     const result = await validationResult(req);
     if(result.isEmpty()) {
         const query = matchedData(req);

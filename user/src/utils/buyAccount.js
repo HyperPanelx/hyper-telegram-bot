@@ -14,11 +14,12 @@ const SelectPlanProcess = async (ctx,query) => {
     twoAnswersState.first=Number(query.split('-')[1]);
     const server_list=extractIps(shareData.servers_list);
     if(server_list){
+        await ctx.reply('لطفا چند لحظه صبر کنید...')
         const getLocations=await getServerLocation(server_list);
         const edited_servers_list=getLocations.map((item,index)=>{
             return [{text:`${index+1}. ${item.countryCode} - ${item.countryName}`,callback_data:`select_server-${item.ip}`}];
         });
-        ctx.reply('✅ Our available servers.\n❔ Choose a location:',{
+        await ctx.reply('✅ در حال حاضر سرور ها با موقعیت مکانی زیر موجود می باشد.\nجهت انتخاب روی یک گزینه کلیک نمایید:',{
             reply_markup:{
                 inline_keyboard:[
                     ...edited_servers_list
@@ -26,7 +27,7 @@ const SelectPlanProcess = async (ctx,query) => {
             }
         })
     }else{
-        ctx.reply('❌ sorry but there is not any available server! contact admins.')
+        ctx.reply('❌ متاسفانه سرور فعالی برای این ربات تنظیم نشده است.\nجهت رفع اشکال به ادمین ها پیام دهید.')
         await generateCommands(ctx)
         resetAllStates(ctx.chat.id)
         resetAllAnswers(ctx.chat.id)
@@ -47,6 +48,7 @@ const selectServersProcess = async (ctx,query) => {
     const order_id=nanoid.nanoid(28);
     const authority=await requestAuthority(order_data.plan.price,ctx.botInfo.username,order_id);
     if(authority ){
+        await ctx.reply('لطفا چند لحظه صبر کنید...')
         const newTransaction=new transactionModel({
             bot_id:ctx.from.id,
             pay_amount:order_data.plan.price,
@@ -61,7 +63,7 @@ const selectServersProcess = async (ctx,query) => {
             await createOrder(ctx,order_data.plan.duration,order_data.plan.multi,order_data.plan.price,order_id,authority,false)
         })
     }else{
-        ctx.reply('❌ sorry but there is something wrong with zarin pal.')
+        ctx.reply('❌ متاسفانه اشکالی در زرین پال پیش آمده است. لطفا بعدا تلاش کنید!')
         await generateCommands(ctx)
     }
     resetAllStates(ctx.chat.id)

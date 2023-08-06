@@ -1,15 +1,14 @@
 require('dotenv').config()
-const nanoid=require('nanoid')
 const {bot}=require('../bot.config')
-const adminModel=require('../models/Admin')
 const transactionModel=require('../models/Transaction')
 const userModel=require('../models/User');
 const {addPhoneProcess}=require('../utils/addPhone')
-const {getOneQuestionState,getTwoQuestionState, resetAllStates}=require('../utils/states')
-const {generateCommands,getAdminsServersList,getPlans,getZarinToken,getOrderData,transformPlanId,extractPlan,showTransactionResult,createPayLink,createOrder,queryValidation}=require('../utils/utils');
+const {getOneQuestionState,getTwoQuestionState, resetAllStates, getThreeQuestionState}=require('../utils/states')
+const {generateCommands,getAdminsServersList,getZarinToken,extractPlan,showTransactionResult,queryValidation,getPlanFromDB}=require('../utils/utils');
 const {SelectPlanProcess,selectServersProcess}=require('../utils/buyAccount')
 const {shareData}=require('../utils/shareData')
 const {resetAllAnswers} = require("../utils/answers");
+const {sendTicketProcess} = require("../utils/sendTicket");
 ///////////
 
 
@@ -18,11 +17,12 @@ bot.command('start', async ctx => {
     resetAllStates(ctx.from.id);
     shareData.servers_list=await getAdminsServersList();
     shareData.zarinpal_token=await getZarinToken();
+    shareData.plans=await getPlanFromDB();
     ///failed
     /// A00000
     const getInitialMessage=ctx.update.message.text.split('/start')[1].trim();
     if(getInitialMessage.includes('failed')){
-       ctx.reply('❌ Something wrong happened in Zarin Pal! try again.')
+       ctx.reply('❌ یک مشکلی از طرف زرین پال بوجود آمد!')
     }else if(getInitialMessage.startsWith('A0')){
         const getTransaction=await transactionModel.findOne({transaction_id:getInitialMessage});
         if(getTransaction){
@@ -41,7 +41,7 @@ bot.command('start', async ctx => {
             const oneQuestionState=getOneQuestionState(ctx.chat.id);
             oneQuestionState.key='add_phone'
             oneQuestionState.first=true
-            ctx.reply( `🫡 Hello ${first_name}, Welcome back to Hyper vpn provider. First of all we need your phone number in case that any error occurs:`);
+            ctx.reply(`🌎️ سلام دوست عزیز,\nبه ربات هایپر خوش بازگشتید. جهت خدمات بهتر ابتدا شماره موبایل خود را وارد نمایید:`);
         }
     }else{
         const newUser=new userModel({
@@ -55,61 +55,10 @@ bot.command('start', async ctx => {
         const oneQuestionState=getOneQuestionState(ctx.chat.id);
         oneQuestionState.key='add_phone'
         oneQuestionState.first=true
-        ctx.reply( `🫡 Hello ${first_name}, Welcome to Hyper vpn provider. First of all we need your phone number in case that any error occurs:`);
+        ctx.reply( `🌎️ سلام دوست عزیز,\nبه ربات هایپر خوش آمدید. جهت خدمات بهتر ابتدا شماره موبایل خود را وارد نمایید:`);
 
     }
 })
-
-
-bot.action('buy_account',async (ctx)=>{
-    await queryValidation(async ()=>{
-        const getUserTransaction=await transactionModel.findOne({bot_id:ctx.from.id,payment_status:'waiting payment'});
-        if(getUserTransaction){
-            const order_data=getOrderData(getUserTransaction.plan_id,getUserTransaction.target_server);
-            await createOrder(ctx,order_data.plan.duration,order_data.plan.multi,order_data.plan.price,getUserTransaction.order_id,getUserTransaction.transaction_id,true);
-        }else{
-            const twoQuestionState=getTwoQuestionState(ctx.chat.id);
-            twoQuestionState.key='buy_account'
-            twoQuestionState.first=true
-            twoQuestionState.second=true
-            await getPlans(ctx)
-        }
-    },ctx)
-})
-bot.action('show_account',async (ctx)=>{
-    await queryValidation(async ()=>{
-        const userData=await userModel.findOne({bot_id:ctx.from.id});
-        if(userData.accounts.length>0){
-            const accounts=userData.accounts.map(item=>{
-                return `👨🏼‍💼 Username: ${item.username}\n🗝 Password: ${item.password}\n📅 Active until: ${item.exdate}`
-            })
-            ctx.reply('✅ Your accounts list:\n\n'+accounts)
-        }else{
-            ctx.reply('❌ You dont have any account!')
-        }
-        await generateCommands(ctx)
-    },null)
-})
-
-bot.action('show_transactions',async (ctx)=>{
-    await queryValidation(async ()=>{
-        const allTransactions=await transactionModel.find({bot_id:ctx.from.id});
-        if(allTransactions.length>0){
-            const data=transformPlanId(allTransactions)
-            const transfered_data=data.map(item=>{
-                return `👜 Order id: ${item._doc.order_id}\n🏆 Plan: ${item.plan_id.duration} Month - ${item.plan_id.multi} Multi user\n💴 Pay amount: ${item.plan_id.price} T\n🎖 Ref id : ${item._doc?.ref_id || ''}\n❔ Payment status: ${item._doc.payment_status}\n💳 Card number: ${item?._doc?.card_num || ''}`
-            }).join('\n<--------------------->\n');
-            await ctx.reply('✅ Your Transactions:\n'+transfered_data);
-            await generateCommands(ctx);
-        }else{
-            await ctx.reply('❌ You have zero transaction record.');
-            await generateCommands(ctx);
-        }
-    },null)
-})
-
-
-
 
 
 
@@ -130,11 +79,11 @@ bot.on('callback_query', async (ctx) => {
         if(query.includes('cancel_order')){
             const transaction_id=query.split('-')[1];
             await transactionModel.findOneAndUpdate({transaction_id:transaction_id},{payment_status:'failed'});
-            await ctx.reply('✅ Order cancelled!')
+            await ctx.reply('✅ سفارش شما با موفقیت کنسل شد!')
             await generateCommands(ctx)
         }
 
-    },ctx)
+    },ctx,false,true)
 
 
 })
@@ -144,7 +93,9 @@ bot.on('callback_query', async (ctx) => {
 bot.on('message',  async (ctx) =>{
     const txt=ctx.update.message.text;
     const oneQuestionState=getOneQuestionState(ctx.chat.id);
-    oneQuestionState.key==='add_phone' && await addPhoneProcess(ctx,txt)
+    const threeQuestionState=getThreeQuestionState(ctx.chat.id);
+    oneQuestionState.key==='add_phone' && await addPhoneProcess(ctx,txt);
+    threeQuestionState.key==='send_ticket' && await sendTicketProcess(ctx,txt);
 });
 
 
