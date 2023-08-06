@@ -11,10 +11,10 @@ const unlockUserProcess = async (ctx,txt) => {
       oneAnswerState.first=txt
       const isDeleted=await unlockUser(ctx,oneAnswerState.first);
       if(isDeleted){
-          await ctx.reply(`✅ user unlocked successfully!`)
+          await ctx.reply(`✅ قفل اکانت با موفقیت باز شد.`)
           await generateCommands(ctx)
       }else{
-          await ctx.reply('❌ operation failed! enter /start to try again!')
+          await ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.')
       }
       resetAllAnswers(ctx.chat.id);
       resetAllStates(ctx.chat.id);

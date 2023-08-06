@@ -11,21 +11,21 @@ const createAdminProcess = async (ctx,txt) => {
         threeQuestionState.second=false
         /// username
         threeAnswersState.first=txt
-        await ctx.reply('Enter new password:');
+        await ctx.reply('پسورد را وارد نمایید:');
     }else if(threeQuestionState.third){
         threeQuestionState.third=false
         /// password
         threeAnswersState.second=txt
-        await ctx.reply('Enter role:\n0 = full access');
+        await ctx.reply('نقش کاربر:\n0 = دسترسی کامل');
     }else if( threeAnswersState.first && threeAnswersState.second && !threeQuestionState.first && !threeQuestionState.second && !threeQuestionState.third){
         /// role
         threeAnswersState.third=txt
         const isCreated=await createAdmin(ctx,threeAnswersState.first,threeAnswersState.second,threeAnswersState.third);
         if(isCreated){
-            await ctx.reply(`✅ admin user created successfully!`);
+            await ctx.reply(`✅ کاربر ادمین با موفقیت اضافه شد.`);
             await generateCommands(ctx);
         }else{
-            await ctx.reply('❌ operation failed! enter /start to try again!');
+            await ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.');
         }
         resetAllAnswers(ctx.chat.id);
         resetAllStates(ctx.chat.id);

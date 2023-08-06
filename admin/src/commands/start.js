@@ -18,9 +18,12 @@ const {changeMultiProcess}=require('../utils/changeMulti');
 const {addPaypalProcess}=require('../utils/addPaypal');
 const {getIPProcess}=require('../utils/getIP');
 const {startAuthProcess}=require('../utils/startAuth');
+const {answerTicketProcess}=require('../utils/answerTicket');
+const {getTransactionProcess}=require('../utils/getTransaction');
 ///////////
 
 bot.command('start', ctx => {
+    ctx.reply('در حال توسعه. کار نکنید.')
     resetAllStates(ctx.chat.id);
     resetAllAnswers(ctx.chat.id);
     const {id,first_name}=ctx.from;
@@ -40,11 +43,11 @@ bot.command('start', ctx => {
             save().
             then(()=>{
                 ctx.reply(
-                    `✅ Hello ${first_name}! Welcome to SSH bot management.\n If you are an admin and using hyper admin panel on your server, we are ready to managing your server (beside web interface) on this bot. \nbut first I need at least on available server to move on.  So let's add your first SSH server!`,
+                    `✅ سلام دوست عزیز,\nبه ربات هایپر جهت کنترل کردن سرور های ssh که توسط هایپر نصب شده اند خوش آمدید. در ابتدا برای شروع کار ما نیاز به ثبت یک سرور فعال از طرف شما داریم.`,
                     {
                     reply_markup: {
                         inline_keyboard: [
-                            [{text: 'add server', callback_data: 'add_server'}],
+                            [{text: 'اضافه کردن سرور', callback_data: 'add_server'}],
                         ],
                     }
                 })
@@ -52,12 +55,12 @@ bot.command('start', ctx => {
         }else{
             if(response.server.length===0){
                ctx.reply(
-                   `✅ Hello ${first_name}! Welcome to SSH bot management. \n❔ You dont have any available server! do you want add one?`,
+                   `✅ سلام دوست عزیز,\nخوش آمدید. آیا مایل به اضافه کردن یک سرور هستید؟`,
                    {
                    reply_markup: {
                        inline_keyboard: [
-                           [{ text: '✅ yes', callback_data: 'add_server',  }],
-                           [{ text: '❌ no', callback_data: 'cancel_add_server' }],
+                           [{ text: '✅ بله', callback_data: 'add_server',  }],
+                           [{ text: '❌ خیر', callback_data: 'cancel_add_server' }],
                        ],
                    },
                })
@@ -66,12 +69,12 @@ bot.command('start', ctx => {
                     return [{text:item.ip,callback_data: `select_server-${item.ip}`}]
                 });
                 ctx.reply(
-                    `✅ Hello ${first_name}! Welcome to SSH bot management. you have ${response.server.length} available server!`,
+                    `✅ سلا دوست عزیز, شما ${response.server.length} سرور فعال دارید. جهت ادامه کار یک سرور را انتخاب کنید.`,
                     {
                         reply_markup: {
                             inline_keyboard: [
                                 ...servers_list,
-                                [{text:'add server',callback_data: 'add_server'}],
+                                [{text:'اضافه کردن سرور',callback_data: 'add_server'}],
                             ],
                         }
                     })
@@ -90,11 +93,11 @@ bot.action('add_server',async (ctx)=>{
     fourQuestionState.second=true
     fourQuestionState.third=true
     fourQuestionState.fourth=true
-    await ctx.reply('Enter IP address:')
+    await ctx.reply('آی پی آدرس سرور را وارد نمایید:')
 })
 
 bot.action('cancel_add_server',async (ctx)=>{
-    await ctx.reply('😪 Maybe later.')
+    await ctx.reply('😪 شاید بعدا!')
 })
 
 bot.action('show_servers',async (ctx)=>{
@@ -103,7 +106,7 @@ bot.action('show_servers',async (ctx)=>{
         return [{text:item.ip,callback_data: `select_server-${item.ip}`}]
     });
     ctx.reply(
-        `✅ Available servers:`,
+        `✅ سرور های ثبت شده توسط شما:`,
         {
             reply_markup: {
                 inline_keyboard: [
@@ -118,7 +121,7 @@ bot.action('change_zarinpal_token',async (ctx)=>{
     const oneQuestionState=getOneQuestionState(ctx.chat.id);
     oneQuestionState.key='add_paypal'
     oneQuestionState.first=true
-    await ctx.reply('Enter Token:');
+    await ctx.reply('توکن معتبر زرین پال را وارد نمایید:\n⚠️ اخطار: در صورت اشتباه بودن توکن, کاربران جهت خرید اکانت در ربات کاربران به مشکل بر خواهند خورد.\n⚠️ اخطار: هر سرور فقط اجازه ثبت یک توکن را دارد.');
 })
 bot.action('show_to_remove_server',async (ctx)=>{
     const getAdmin=await adminModel.findOne({bot_id:ctx.from.id});
@@ -126,7 +129,7 @@ bot.action('show_to_remove_server',async (ctx)=>{
         return [{text:item.ip,callback_data: `remove_server-${item.ip}`}]
     });
     ctx.reply(
-        `❔ Select server to remove:`,
+        `❔ سرور مد نظر را جهت حذف انتخاب کنید:`,
         {
             reply_markup: {
                 inline_keyboard: [
@@ -152,7 +155,7 @@ bot.on('callback_query',async (ctx)=>{
             serverDataState.token=token
             await generateCommands(ctx);
         }else{
-            await ctx.reply(`❌ api token is expired! you should start authentication on ${server_ip} again.`,{
+            await ctx.reply(`❌ توکن صادر شده توسط api منقضی شده است. شما احتیاج به احرازهویت مجدد برای استفاده از منابع این سرور دارید.`,{
                 reply_markup: {
                     inline_keyboard: [
                         [{text:'start authentication',callback_data: `start_authentication-${server_ip}`}],
@@ -167,14 +170,14 @@ bot.on('callback_query',async (ctx)=>{
         threeQuestionState.key='start_authentication';
         threeQuestionState.third=true;
         threeAnswersState.first=server_ip;
-        ctx.reply('Enter admin username:')
+        ctx.reply('نام کاربری ادمین را وارد نمایید:')
     }else if(query.includes('remove_server')){
         const server_ip=query.split('-')[1];
         const adminServers=[...getAdminData.server];
         const filterServers=adminServers.filter(item=>item.ip!==server_ip);
         await adminModel.findOneAndUpdate({bot_id:ctx.from.id},{server:filterServers});
         resetServerData(ctx.chat.id)
-        ctx.reply('✅ server removed successfully! enter /start to continue.')
+        ctx.reply('✅ سرور با موفقیت حذف شد! کامند start/ را جهت ادامه کار وارد نمایید. ')
     }
 })
 
@@ -191,6 +194,8 @@ bot.on('message',  async (ctx) =>{
     fourQuestionState.key==='add_server' &&  await addServerProcess(ctx,txt);
     threeQuestionState.key==='generate' && await generateUserProcess(ctx,txt);
     oneQuestionState.key==='delete_user' && await deleteUserProcess(ctx,txt);
+    oneQuestionState.key==='get_transaction' && await getTransactionProcess(ctx,txt);
+    twoQuestionState.key==='answer_ticket' && await answerTicketProcess(ctx,txt);
     oneQuestionState.key==='unlock' && await unlockUserProcess(ctx,txt);
     oneQuestionState.key==='lock' && await lockUserProcess(ctx,txt);
     twoQuestionState.key==='reset_password' && await resetUserPassProcess(ctx,txt);

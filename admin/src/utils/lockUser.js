@@ -10,10 +10,10 @@ const lockUserProcess = async (ctx,txt) => {
       oneAnswerState.first=txt
       const isDeleted=await lockUser(ctx,oneAnswerState.first);
       if(isDeleted){
-          await ctx.reply(`✅ user locked successfully!`)
+          await ctx.reply(`✅ اکانت با موفقیت قفل شد.`)
           await generateCommands(ctx)
       }else{
-          await ctx.reply('❌ operation failed! enter /start to try again!')
+          await ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.')
       }
       resetAllAnswers(ctx.chat.id);
       resetAllStates(ctx.chat.id);

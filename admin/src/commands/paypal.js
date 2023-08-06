@@ -9,10 +9,10 @@ bot.command('add_paypal',async (ctx)=>{
         const userData=await adminModel.findOne({bot_id:ctx.from.id});
         if(userData.zarinpal_token.length>0){
             //// has token
-            await ctx.reply(`✅ You have one available zarinpal token:\n${userData.zarinpal_token}`,{
+            await ctx.reply(`✅ شما یک توکن ثبت شده زرین پال دارید:\n${userData.zarinpal_token}`,{
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: 'change token', callback_data: 'change_zarinpal_token',  }],
+                        [{ text: 'تغییر توکن', callback_data: 'change_zarinpal_token',  }],
                     ],
                 },
             });
@@ -22,13 +22,13 @@ bot.command('add_paypal',async (ctx)=>{
             const allAdmins=await adminModel.find({});
             const isTokenAvailable=allAdmins.some(item=>item.zarinpal_token.length>0)
             if(isTokenAvailable){
-                await ctx.reply('❌ sorry, there is one registered token by another admin on your servers.');
+                await ctx.reply('❌ یک توکن زرین پال توسط یک ادمین دیگر ثبت شده است.');
                 await generateCommands(ctx);
             }else{
                 const oneQuestionState=getOneQuestionState(ctx.chat.id);
                 oneQuestionState.key='add_paypal'
                 oneQuestionState.first=true
-                await ctx.reply('Enter Token:');
+                await ctx.reply('توکن را وارد نمایید:');
             }
         }
     },ctx)

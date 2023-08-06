@@ -6,10 +6,10 @@ bot.command('online',async (ctx)=>{
     await commandValidation(async ()=>{
         const onlineUsersList=await getOnlineUsersList(ctx);
         if(onlineUsersList){
-            await ctx.reply('✅ online users:\n\n'+onlineUsersList)
+            await ctx.reply('✅ لیست کاربران آنلاین به شرح زیر است:\n\n'+onlineUsersList)
             await generateCommands(ctx);
         }else{
-            await ctx.reply(`❌ error in connecting to api!`)
+            await ctx.reply(`❌ عدم امکان برقراری ارتباط با سرور`)
         }
     },ctx)
 })

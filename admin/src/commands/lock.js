@@ -8,6 +8,6 @@ bot.command('lock',async (ctx)=>{
         const oneQuestionState=getOneQuestionState(ctx.chat.id)
         oneQuestionState.key='lock'
         oneQuestionState.first=true
-        await ctx.reply('Enter username:')
+        await ctx.reply('نام کاربری را وارد نمایید:')
     },ctx)
 })

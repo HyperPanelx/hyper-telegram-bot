@@ -5,6 +5,8 @@ const {resetAllStates}=require('./states')
 const {resetAllAnswers}=require('./answers')
 const {getServerData}=require('./addServer')
 
+
+
 const querySerialize = (obj) => {
   return Object.entries(obj).map(([key, val]) => `${key}=${val}`).join('&');
 }
@@ -47,12 +49,12 @@ const getMe = async (ip,token) => {
 
  const generateCommands = async (ctx) => {
      const serverDataState=getServerData(ctx.chat.id)
-    await ctx.reply(`⚒ Available operations on ${serverDataState.ip}:\n💡 /users - users list\n💡 /online - online users\n💡 /generate - generate user \n💡 /delete - delete user \n💡 /get_ip - get user connections ip \n💡 /unlock - unlock user\n💡 /lock - lock user\n💡 /reset - reset password\n💡 /create - create admin user\n💡 /delete_admin - delete admin user\n💡 /referral_token - get referral token\n💡 /change_multi -  change user multi\n💡 /add_paypal -  add your zarinpal token`,{
+    await ctx.reply(`⚙️ کامند های فعال جهت کنترل سرور: ${serverDataState.ip}:\n💡 /users - لیست کاربران\n💡 /online - لیست کاربران آنلاین\n💡 /generate - تولید یک کاربر \n💡 /delete - حذف کاربر \n💡 /get_ip - دریافت آی پی های فعال روی اکانت \n💡 /unlock - آنلاک کردن کاربر\n💡 /lock - قفل کردن کاربر\n💡 /reset - ریست کردن  رمز کاربر\n💡 /create - ایجاد کاربر با دسترسی ادمین\n💡 /delete_admin - حذف کاربر ادمین\n💡 /referral_token - دریافت توکن معرفی\n💡 /change_multi -  تغییر کاربران همزمان اکانت\n💡 /get_transaction -  دریافت تراکنش با شماره سفارش\n💡 /show_ticket -  مشاهده تیکت های فعال\n💡 /answer_ticket -  پاسخ به تیکت\n💡 /add_paypal - اضافه کردن توکن زرین پال`,{
         reply_markup:{
             inline_keyboard: [
-                [{text:'add server',callback_data: 'add_server'}],
-                [{text:'servers list',callback_data: 'show_servers'}],
-                [{text:'remove server',callback_data: 'show_to_remove_server'}],
+                [{text:'اضافه کردن سرور',callback_data: 'add_server'}],
+                [{text:'سویچ کردن بین سرور ها',callback_data: 'show_servers'}],
+                [{text:'حذف سرور',callback_data: 'show_to_remove_server'}],
             ],
         }
     })
@@ -71,12 +73,12 @@ const commandValidation =async (callback,ctx) => {
           return [{text:item.ip,callback_data: `select_server-${item.ip}`}]
       });
       ctx.reply(
-          `✅ Hello ${adminData.firstname}! Welcome to SSH bot management. you have ${adminData.server.length} available server!`,
+          `✅ سلا دوست عزیز, شما ${adminData.server.length} سرور فعال دارید. جهت ادامه کار یک سرور را انتخاب کنید.`,
           {
               reply_markup: {
                   inline_keyboard: [
                       ...servers_list,
-                      [{text:'add server',callback_data: 'add_server'}],
+                      [{text:'اضافه کردن سرور',callback_data: 'add_server'}],
                   ],
               }
           })
@@ -94,7 +96,7 @@ const getUsersList = async (ctx) => {
         const response=await request.json();
         if(response.success){
             return response.data.map(item=>{
-                return  `👨🏼‍💼username:  ${item.user}\npassword:  ${item.passwd}\nmulti:  ${item.multi}\nexdate:  ${item.exdate}\nstatus:  ${item.status}\n<----------------------->\n`
+                return  `👨🏼‍💼نام کاربری:  ${item.user}\nرمز عبور:  ${item.passwd}\nتعداد کاربر همزمان:  ${item.multi}\nتاریخ انقضا:  ${item.exdate}\nوضعیت:  ${item.status==='enable' ? 'فعال' : 'غیر فعال'}\n<--------------------------------------->\n`
             }).join('');
         }else{
             return false
@@ -117,8 +119,8 @@ const getOnlineUsersList = async (ctx) => {
         if(response.users){
             const responseEntries=Object.entries(response.users);
             return responseEntries.map(item=>{
-                return  `👨🏼‍💼 username: ${item[0]}\n📱 connections: ${item[1]}`
-            }).join('\n<--------------------------->\n');
+                return  `👨🏼‍💼 نام کاربری: ${item[0]}\n📱 تعداد دستگاه متصل: ${item[1]}`
+            }).join('\n<-------------------------------------------->\n');
         }else{
             return false
         }
@@ -147,8 +149,8 @@ const generateUser =async (multi,exdate,count,ctx) => {
         const response=await request.json();
         if(response.success){
             return response.data.map(item=>{
-                return  `username: ${item.user}\npassword: ${item.passwd}`
-            }).join('\n<----------------->\n');
+                return  `نام کاربری: ${item.user}\nرمز عبور: ${item.passwd}`
+            }).join('\n<----------------------------------->\n');
         }else{
             return false
         }

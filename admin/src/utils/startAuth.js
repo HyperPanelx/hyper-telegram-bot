@@ -32,7 +32,7 @@ const startAuthProcess = async (ctx,txt) => {
         threeQuestionState.third=false
         /// username
         threeAnswersState.second=txt
-        ctx.reply('Enter admin password:')
+        ctx.reply('نام کاربری ادمین را وارد نمایید:')
     }else if(threeAnswersState.first && threeAnswersState.second && !threeQuestionState.first && !threeQuestionState.second && !threeQuestionState.third){
         /// password
         threeAnswersState.third=txt
@@ -48,9 +48,9 @@ const startAuthProcess = async (ctx,txt) => {
                 }
             });
             await adminModel.findOneAndUpdate({bot_id:ctx.from.id},{server:changedTokenServers});
-            ctx.reply('✅ Authentication was successful! enter /start to continue!')
+            ctx.reply('✅ احرازهویت موفقیت آمیز بود. جهت ادامه کار کامند start/ را وارد نمایید.')
         }else{
-            ctx.reply('❌ Authentication failed! enter /start to try again!')
+            ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.')
         }
         resetAllAnswers(ctx.chat.id);
         resetAllStates(ctx.chat.id);

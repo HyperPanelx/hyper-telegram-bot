@@ -58,25 +58,25 @@ const addServerProcess = async (ctx,txt) => {
         /// ip
         fourAnswerState.first=txt
 
-        await ctx.reply('Enter admin username:')
+        await ctx.reply('نام کاربری ادمین را وارد نمایید:')
     }else if(fourQuestionState.third){
         fourQuestionState.third=false
         // username
         fourAnswerState.second=txt
 
-        await ctx.reply('Enter admin password:')
+        await ctx.reply('پسورد ادمین را وارد نمایید:')
     }else if(fourQuestionState.fourth){
         fourQuestionState.fourth=false
         // password
         fourAnswerState.third=txt
 
-        await ctx.reply('Enter Api port:\n⚠️Note: if you dont know the port enter 6655, otherwise enter port')
+        await ctx.reply('پورت api  را وارد نمایید:\n⚠️نکته: در صورتی که در این باره اطلاعی ندارید مقدار 6655 راوارد کنید.')
     } else if(fourAnswerState.first && fourAnswerState.second && fourAnswerState.third && !fourQuestionState.first && !fourQuestionState.second && !fourQuestionState.third && !fourQuestionState.fourth){
         /// port
         fourAnswerState.fourth=txt;
         const access_token=await validateServer(fourAnswerState.first,fourAnswerState.second,fourAnswerState.third,fourAnswerState.fourth);
         if(access_token){
-            await ctx.reply('✅ Server is valid and authenticated! enter /start to restart bot.');
+            await ctx.reply('✅ عملیات احرازهویت سرور با موفقیت انجام شد. جهت ادامه کار کامند start/ را وارد نمایید.');
             const adminData=await adminModel.findOne({bot_id:ctx.from.id});
             await adminModel.findOneAndUpdate({bot_id:ctx.from.id},{
                 server: [
@@ -86,7 +86,7 @@ const addServerProcess = async (ctx,txt) => {
                },
             );
         }else{
-            await ctx.reply('❌ Server is invalid and unavailable! enter /start to restart bot.');
+            await ctx.reply('❌ عملیات احرازهویت با شکست مواجه شد. برای تلاش مجدد کامند start/ را وارد نمایید. ');
         }
         resetAllStates(ctx.chat.id)
         resetAllAnswers(ctx.chat.id)

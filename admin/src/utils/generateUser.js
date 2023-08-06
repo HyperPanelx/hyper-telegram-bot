@@ -11,21 +11,21 @@ const generateUserProcess = async (ctx,txt) => {
         threeQuestionState.second=false
         //// multi
         threeAnswerState.first=txt
-        await ctx.reply('Enter expiration date (yyyy-mm-dd):');
+        await ctx.reply('تاریخ انقضای اکانت به میلادی (yyyy-mm-dd):');
     }else if(threeQuestionState.third){
         threeQuestionState.third=false
         //exdate
         threeAnswerState.second=txt
-        await ctx.reply('Enter count:')
+        await ctx.reply('تعداد اکانت:')
     }else if(threeAnswerState.first && threeAnswerState.second && !threeQuestionState.first && !threeQuestionState.second && !threeQuestionState.third){
         /// count
         threeAnswerState.third=txt;
         const generatedUser=await generateUser(threeAnswerState.first,threeAnswerState.second,threeAnswerState.third,ctx);
         if(generatedUser){
-            await ctx.reply(`✅ users generated successfully!\n\n`+generatedUser)
+            await ctx.reply(`✅ اکانت ها با موفقیت ساخته شدند!\n\n`+generatedUser)
             await generateCommands(ctx)
         }else{
-            await ctx.reply('❌ operation failed! enter /start to try again!')
+            await ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.')
         }
         resetAllStates(ctx.chat.id);
         resetAllAnswers(ctx.chat.id);

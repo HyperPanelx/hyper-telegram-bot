@@ -8,7 +8,7 @@ bot.command('delete',async (ctx)=>{
         const oneQuestionState=getOneQuestionState(ctx.chat.id)
         oneQuestionState.key='delete_user'
         oneQuestionState.first=true
-        await ctx.reply('Enter username:')
+        await ctx.reply('نام کاربری را وارد نمایید:')
     },ctx)
 })
 

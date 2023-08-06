@@ -13,10 +13,10 @@ const addPaypalProcess = async (ctx,txt) => {
         adminModel.
         findOneAndUpdate({bot_id:ctx.from.id},{zarinpal_token:oneAnswersState.first}).
         then(async ()=>{
-            await ctx.reply(`✅ token added successfully!`)
+            await ctx.reply(`✅ توکن با موفقیت ثبت شد!`)
             await generateCommands(ctx)
         }).catch(async ()=>{
-            await ctx.reply('❌ operation failed! enter /start to try again!')
+            await ctx.reply('❌ عدم امکان برقراری ارتباط با دیتابیس.')
         })
       resetAllAnswers(ctx.chat.id);
       resetAllStates(ctx.chat.id);

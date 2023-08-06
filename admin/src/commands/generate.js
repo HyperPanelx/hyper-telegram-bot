@@ -9,7 +9,7 @@ bot.command('generate',async (ctx)=>{
         threeQuestionState.key='generate'
         threeQuestionState.second=true
         threeQuestionState.third=true
-        await ctx.reply('Enter Multi user:')
+        await ctx.reply('تعداد کاربر های همزمان را وارد نمایید:')
     },ctx)
 })
 

@@ -11,10 +11,10 @@ const getIPProcess = async (ctx,txt) => {
       oneAnswersState.first=txt
       const clientIPs=await getIPRequest(ctx,oneAnswersState.first);
       if(clientIPs){
-          await ctx.reply(`✅ connected client ips are:\n`+clientIPs)
+          await ctx.reply(`✅ آی پی های متصل به این اکانت:\n`+clientIPs)
           await generateCommands(ctx)
       }else{
-          await ctx.reply('❌ operation failed! enter /start to try again!')
+          await ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.')
       }
       resetAllAnswers(ctx.chat.id);
       resetAllStates(ctx.chat.id);

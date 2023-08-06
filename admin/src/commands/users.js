@@ -6,7 +6,7 @@ bot.command('users',async (ctx)=>{
    await commandValidation(async ()=>{
        const usersList=await getUsersList(ctx);
        if(usersList){
-           await ctx.reply(`✅ users list:\n\n`+usersList)
+           await ctx.reply(`✅ لیست کاربران به شرح زیر است:\n\n`+usersList)
            await generateCommands(ctx)
        }else{
            await ctx.reply(`❌ error in connecting to api!`)

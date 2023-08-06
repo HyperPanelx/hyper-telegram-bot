@@ -8,6 +8,6 @@ bot.command('reset',async (ctx)=>{
         const twoQuestionState=getTwoQuestionState(ctx.chat.id)
         twoQuestionState.key='reset_password'
         twoQuestionState.second=true
-        await ctx.reply('Enter username:')
+        await ctx.reply('نام کاربری را وارد نمایید:')
     },ctx)
 })

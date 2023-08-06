@@ -10,7 +10,7 @@ bot.command('create',async (ctx)=>{
         threeQuestionState.key='create_admin'
         threeQuestionState.second=true
         threeQuestionState.third=true
-        await ctx.reply('Enter username:')
+        await ctx.reply('نام کاربری را وارد نمایید:')
     },ctx)
 
 })

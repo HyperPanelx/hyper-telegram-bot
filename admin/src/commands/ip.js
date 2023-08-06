@@ -8,6 +8,6 @@ bot.command('get_ip',async (ctx)=>{
         const oneQuestionState=getOneQuestionState(ctx.chat.id)
         oneQuestionState.key='get_ip'
         oneQuestionState.first=true
-        await ctx.reply('Enter username:')
+        await ctx.reply('نام کاربری رت وارد نمایید:')
     },ctx)
 })

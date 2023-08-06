@@ -11,16 +11,16 @@ const resetUserPassProcess = async (ctx,txt) => {
         twoQuestionState.second=false
         /// username
         twoAnswersState.first=txt
-        await ctx.reply('Enter new password:');
+        await ctx.reply('رمز جدید را وارد نمایید:');
     }else if( twoAnswersState.first && !twoQuestionState.first && !twoQuestionState.second){
         /// new pass
         twoAnswersState.second=txt
         const isPasswordReset=await resetPassword(ctx,twoAnswersState.first,twoAnswersState.second);
         if(isPasswordReset){
-            await ctx.reply(`✅ user's password changed successfully!`)
+            await ctx.reply(`✅ پسورد یوزر با موفقیت تغییر کرد.`)
             await generateCommands(ctx)
         }else{
-            await ctx.reply('❌ operation failed! enter /start to try again!')
+            await ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.')
         }
         resetAllAnswers(ctx.chat.id);
         resetAllStates(ctx.chat.id);
