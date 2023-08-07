@@ -13,6 +13,7 @@ bot.command('add_paypal',async (ctx)=>{
                 reply_markup: {
                     inline_keyboard: [
                         [{ text: 'تغییر توکن', callback_data: 'change_zarinpal_token',  }],
+                        [{ text: 'حذف توکن', callback_data: 'remove_zarinpal_token',  }],
                     ],
                 },
             });

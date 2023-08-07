@@ -61,6 +61,24 @@ const getFourQuestionState = (chatId) => {
     return userData
 }
 
+const fiveQuestion = {}
+
+const getFiveQuestionState = (chatId) => {
+    let userData = fiveQuestion[chatId];
+    if (!userData) {
+        userData = {
+            key:null,
+            first:false,
+            second:false,
+            third:false,
+            fourth:false,
+            fifth:false
+        }
+        fiveQuestion[chatId] = userData
+    }
+    return userData
+}
+
 const resetAllStates = (chatId) => {
     const oneQuestionState = getOneQuestionState(chatId)
     oneQuestionState.key=null
@@ -84,8 +102,16 @@ const resetAllStates = (chatId) => {
     fourQuestionState.third=false
     fourQuestionState.fourth=false
 
+    const fiveQuestionState=getFiveQuestionState(chatId)
+    fiveQuestionState.key=null
+    fiveQuestionState.first=false
+    fiveQuestionState.second=false
+    fiveQuestionState.third=false
+    fiveQuestionState.fourth=false
+    fiveQuestionState.fifth=false
+
 }
 
 module.exports={
-    resetAllStates,getFourQuestionState,getTwoQuestionState,getOneQuestionState,getThreeQuestionState
+    resetAllStates,getFourQuestionState,getTwoQuestionState,getOneQuestionState,getThreeQuestionState,getFiveQuestionState
 }

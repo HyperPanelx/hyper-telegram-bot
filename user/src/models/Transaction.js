@@ -64,7 +64,21 @@ const transactionSchema=mongoose.Schema({
         trim:true,
         minLength:0,
         maxLength:200,
-    }
+    },
+    created_at:{
+        type:String,
+        required:false,
+        trim:true,
+        minLength:0,
+        maxLength:200,
+    },
+    updated_at:{
+        type:String,
+        required:false,
+        trim:true,
+        minLength:0,
+        maxLength:200,
+    },
 
 })
 

@@ -7,6 +7,16 @@ const {resetAllStates} = require("./states");
 const {resetAllAnswers} = require("./answers");
 const planModel=require('../models/Plan')
 
+const problems = [
+    {
+        id:1,
+        title:'عدم اتصال اکانت',
+    },
+    {
+        id:2,
+        title:'مشکل در تراکنش'
+    }
+]
 
 
 const getPlanFromDB =async () => {
@@ -137,7 +147,8 @@ const getAdminsServersList = async () => {
                 return  item.map(server=>{
                     return {
                         ip:server.ip,
-                        token:server.token
+                        token:server.token,
+                        ssh_port:server.ssh_port
                     }
                 })
             }
@@ -269,12 +280,13 @@ const calculateExDate = (addMonth) => {
     const newMonth=new Date(newDate).getMonth();
     return `${year}-${newMonth}-${day}`
 }
-const getTokenByIP = async (ip) => {
+const getServerDataByIP = async (ip) => {
     shareData.servers_list=await getAdminsServersList();
-   return shareData.servers_list.filter(item=>item.ip===ip)[0].token;
+   return shareData.servers_list.filter(item=>item.ip===ip)[0];
 }
 
-const saveAccountToDB = async (bot_id,username,password,exdate,server,multi) => {
+
+const saveAccountToDB = async (bot_id,username,password,exdate,server,multi,ssh_port) => {
   const userData=await userModel.findOne({bot_id:bot_id});
   if(userData){
       await userModel.findOneAndUpdate({bot_id:bot_id},{accounts:[
@@ -283,7 +295,9 @@ const saveAccountToDB = async (bot_id,username,password,exdate,server,multi) => 
                   username:username,
                   password:password,
                   exdate:exdate,
-                  server,multi
+                  server,
+                  multi,
+                  ssh_port
               }
           ]
       })
@@ -292,7 +306,7 @@ const saveAccountToDB = async (bot_id,username,password,exdate,server,multi) => 
 }
 
 const generateUser =async (bot_id,plan_id,server) => {
-    const token=await getTokenByIP(server)
+    const serverData=await getServerDataByIP(server);
     const plan=filterPlan(plan_id);
     const duration=Number(plan.duration);
     const exdate=calculateExDate(duration)
@@ -309,12 +323,12 @@ const generateUser =async (bot_id,plan_id,server) => {
             method:'POST',
             headers:{
                 'Content-Type':'application/json',
-                Authorization:`Bearer ${token}`
+                Authorization:`Bearer ${serverData.token}`
             },
         })
         const response=await request.json();
         if(response.success){
-            await saveAccountToDB(bot_id,response.data[0].user,response.data[0].passwd,exdate,server,multi)
+            await saveAccountToDB(bot_id,response.data[0].user,response.data[0].passwd,exdate,server,multi,serverData.ssh_port)
         }else{
             return false
         }
@@ -324,5 +338,5 @@ const generateUser =async (bot_id,plan_id,server) => {
 }
 
 module.exports={
-    querySerialize,responseHandler,generateCommands,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan,showTransactionResult,createPayLink,createOrder,filterPlan,generateUser,queryValidation,invisibleServerIP,removeDuplicate,getPlanFromDB
+    querySerialize,responseHandler,generateCommands,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan,showTransactionResult,createPayLink,createOrder,filterPlan,generateUser,queryValidation,invisibleServerIP,removeDuplicate,getPlanFromDB,problems
 }

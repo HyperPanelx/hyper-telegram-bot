@@ -69,19 +69,22 @@ const commandValidation =async (callback,ctx) => {
       resetAllStates(ctx.chat.id);
       callback()
   }else{
-      const servers_list=adminData.server.map((item)=>{
-          return [{text:item.ip,callback_data: `select_server-${item.ip}`}]
-      });
-      ctx.reply(
-          `✅ سلا دوست عزیز, شما ${adminData.server.length} سرور فعال دارید. جهت ادامه کار یک سرور را انتخاب کنید.`,
-          {
-              reply_markup: {
-                  inline_keyboard: [
-                      ...servers_list,
-                      [{text:'اضافه کردن سرور',callback_data: 'add_server'}],
-                  ],
-              }
-          })
+      if(adminData){
+          const servers_list=adminData.server.map((item)=>{
+              return [{text:item.ip+` - ssh: ${item.ssh_port}`,callback_data: `select_server-${item.ip}`}]
+          });
+          ctx.reply(
+              `✅ سلا دوست عزیز, شما ${adminData.server.length} سرور فعال دارید. جهت ادامه کار یک سرور را انتخاب کنید.`,
+              {
+                  reply_markup: {
+                      inline_keyboard: [
+                          ...servers_list,
+                          [{text:'اضافه کردن سرور',callback_data: 'add_server'}],
+                      ],
+                  }
+              })
+      }
+
   }
 }
 

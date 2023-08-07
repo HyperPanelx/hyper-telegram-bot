@@ -48,6 +48,7 @@ const selectServersProcess = async (ctx,query) => {
     const order_id=nanoid.nanoid(28);
     const authority=await requestAuthority(order_data.plan.price,ctx.botInfo.username,order_id);
     if(authority ){
+        const date=new Date();
         await ctx.reply('لطفا چند لحظه صبر کنید...')
         const newTransaction=new transactionModel({
             bot_id:ctx.from.id,
@@ -57,6 +58,8 @@ const selectServersProcess = async (ctx,query) => {
             plan_id:order_data.plan.id,
             target_server:order_data.server.ip,
             payment_status:'waiting payment',
+            created_at:date.toLocaleString(),
+            updated_at:date.toLocaleString(),
             card_num:'',ref_id:''
         });
         newTransaction.save().then(async ()=>{

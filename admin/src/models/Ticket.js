@@ -17,9 +17,16 @@ const ticketSchema=mongoose.Schema({
     },
     order_id:{
         type:String,
-        required:true,
+        required:false,
         trim:true,
-        minLength:2,
+        minLength:0,
+        maxLength:200,
+    },
+    username:{
+        type:String,
+        required:false,
+        trim:true,
+        minLength:0,
         maxLength:200,
     },
     title:{

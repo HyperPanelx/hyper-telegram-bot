@@ -3,7 +3,9 @@ const nanoid=require('nanoid')
 const {bot}=require('../bot.config')
 const adminModel=require('../models/Admin')
 ////
-const {resetAllStates,getThreeQuestionState,getFourQuestionState,getTwoQuestionState,getOneQuestionState}=require('../utils/states');
+const {resetAllStates,getThreeQuestionState,getFourQuestionState,getTwoQuestionState,getOneQuestionState,
+    getFiveQuestionState
+}=require('../utils/states');
 const {resetAllAnswers,getThreeAnswersState}=require('../utils/answers')
 const {generateCommands,getMe}=require('../utils/utils');
 const {addServerProcess, resetServerData,getServerData}=require('../utils/addServer');
@@ -23,7 +25,6 @@ const {getTransactionProcess}=require('../utils/getTransaction');
 ///////////
 
 bot.command('start', ctx => {
-    ctx.reply('در حال توسعه. کار نکنید.')
     resetAllStates(ctx.chat.id);
     resetAllAnswers(ctx.chat.id);
     const {id,first_name}=ctx.from;
@@ -66,7 +67,7 @@ bot.command('start', ctx => {
                })
             }else{
                 const servers_list=response.server.map((item)=>{
-                    return [{text:item.ip,callback_data: `select_server-${item.ip}`}]
+                    return [{text:item.ip+` - ssh port: ${item.ssh_port}`,callback_data: `select_server-${item.ip}`}]
                 });
                 ctx.reply(
                     `✅ سلا دوست عزیز, شما ${response.server.length} سرور فعال دارید. جهت ادامه کار یک سرور را انتخاب کنید.`,
@@ -88,11 +89,12 @@ bot.command('start', ctx => {
 
 
 bot.action('add_server',async (ctx)=>{
-    const fourQuestionState=getFourQuestionState(ctx.chat.id);
-    fourQuestionState.key='add_server'
-    fourQuestionState.second=true
-    fourQuestionState.third=true
-    fourQuestionState.fourth=true
+    const fiveQuestionState=getFiveQuestionState(ctx.chat.id);
+    fiveQuestionState.key='add_server'
+    fiveQuestionState.second=true
+    fiveQuestionState.third=true
+    fiveQuestionState.fourth=true
+    fiveQuestionState.fifth=true
     await ctx.reply('آی پی آدرس سرور را وارد نمایید:')
 })
 
@@ -103,7 +105,7 @@ bot.action('cancel_add_server',async (ctx)=>{
 bot.action('show_servers',async (ctx)=>{
     const getAdmin=await adminModel.findOne({bot_id:ctx.from.id});
     const servers_list=getAdmin.server.map((item)=>{
-        return [{text:item.ip,callback_data: `select_server-${item.ip}`}]
+        return [{text:item.ip+` - ssh port: ${item.ssh_port}`,callback_data: `select_server-${item.ip}`}]
     });
     ctx.reply(
         `✅ سرور های ثبت شده توسط شما:`,
@@ -140,6 +142,12 @@ bot.action('show_to_remove_server',async (ctx)=>{
 
 })
 
+bot.action('remove_zarinpal_token',async (ctx)=>{
+    await adminModel.findOneAndUpdate({bot_id:ctx.from.id},{zarinpal_token:''});
+    await ctx.reply('✅ توکن با موفقیت حذف شد.');
+    await generateCommands(ctx);
+})
+
 
 
 bot.on('callback_query',async (ctx)=>{
@@ -151,11 +159,11 @@ bot.on('callback_query',async (ctx)=>{
         const isTokenValid=await getMe(server_ip,token);
         if(isTokenValid){
             const serverDataState=getServerData(ctx.chat.id)
-            serverDataState.ip=server_ip
-            serverDataState.token=token
+            serverDataState.ip=server_ip;
+            serverDataState.token=token;
             await generateCommands(ctx);
         }else{
-            await ctx.reply(`❌ توکن صادر شده توسط api منقضی شده است. شما احتیاج به احرازهویت مجدد برای استفاده از منابع این سرور دارید.`,{
+            await ctx.reply(`❌ توکن صادر شده توسط سرور منقضی شده است. شما احتیاج به احرازهویت مجدد برای استفاده از منابع این سرور دارید.`,{
                 reply_markup: {
                     inline_keyboard: [
                         [{text:'start authentication',callback_data: `start_authentication-${server_ip}`}],
@@ -190,8 +198,8 @@ bot.on('message',  async (ctx) =>{
     const oneQuestionState=getOneQuestionState(ctx.chat.id);
     const twoQuestionState=getTwoQuestionState(ctx.chat.id);
     const threeQuestionState=getThreeQuestionState(ctx.chat.id);
-    const fourQuestionState=getFourQuestionState(ctx.chat.id);
-    fourQuestionState.key==='add_server' &&  await addServerProcess(ctx,txt);
+    const fiveQuestionState=getFiveQuestionState(ctx.chat.id);
+    fiveQuestionState.key==='add_server' &&  await addServerProcess(ctx,txt);
     threeQuestionState.key==='generate' && await generateUserProcess(ctx,txt);
     oneQuestionState.key==='delete_user' && await deleteUserProcess(ctx,txt);
     oneQuestionState.key==='get_transaction' && await getTransactionProcess(ctx,txt);
