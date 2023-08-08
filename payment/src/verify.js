@@ -76,7 +76,7 @@ const generateError = (msg,transaction_id,bot_name) => {
 }
 const finishTransaction = (ev) => {
   const {transaction,bot}=ev.target.dataset;
-  window.location='https://t.me/'+bot+`?start=${transaction}`
+  window.location='https://t.me/'+bot+`?start=done`
 }
 
 const submit_payment = () => {
@@ -96,10 +96,10 @@ const submit_payment = () => {
                 generateTransactionData(response.msg,ref_id,transaction_id,order_id,plan,bot_name)
             }
         }).catch(err=>{
-            window.location='https://t.me/'+bot_name+`?start=${Authority}`
+            window.location='https://t.me/'+bot_name+`?start=done`
         })
     }else{
-        window.location='https://t.me/'+bot_name+`?start=failed`
+        window.location='https://t.me/'+bot_name+`?start=done`
     }
 
 }

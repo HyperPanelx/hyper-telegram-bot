@@ -94,8 +94,8 @@ const redirectToPay = (ev) => {
 }
 
 const backToBot = (ev) => {
-  const {bot,transaction}=ev.target.dataset;
-    window.location='https://t.me/'+bot+"?start="+transaction
+  const {bot}=ev.target.dataset;
+    window.location='https://t.me/'+bot+"?start=done"
 }
 
 const cancelPayment = (ev) => {
@@ -106,9 +106,9 @@ const cancelPayment = (ev) => {
             'Content-Type':'application/json'
         }
     }).then(response=>response.json()).then(response=>{
-        window.location='https://t.me/'+bot+"?start="+transaction
+        window.location='https://t.me/'+bot+"?start=done"
     }).catch(()=>{
-        window.location='https://t.me/'+bot+"?start="+transaction
+        window.location='https://t.me/'+bot+"?start=done"
     })
 }
 
@@ -130,10 +130,10 @@ const getInitialData = () => {
                 generatePaymentData(order_id,duration,multi,price,transaction_id,ip,port,bot_name);
             }
         }).catch(err=>{
-            window.location='https://t.me/'+bot_name+"?start="+authority
+            window.location='https://t.me/'+bot_name+"?start=done"
         })
     }else{
-        window.location='https://t.me/'+bot_name+"?start=failed"
+        window.location='https://t.me/'+bot_name+"?start=done"
     }
 }
 

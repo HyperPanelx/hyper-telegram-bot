@@ -6,6 +6,7 @@ const {shareData} = require("./shareData");
 const {resetAllStates} = require("./states");
 const {resetAllAnswers} = require("./answers");
 const planModel=require('../models/Plan')
+const {bot} = require("../bot.config");
 
 const problems = [
     {
@@ -242,12 +243,7 @@ const filterPlan = (id) => {
   return shareData.plans.filter(item=>item.id==id)[0]
 }
 
-const showTransactionResult = async (ctx,data) => {
-    const statusMessage=data?._doc?.payment_status==='success' ? '✅ تراکنش شما با موفقیت انجام شد.\n'  :  '❌ متاسفانه تراکنش شما ناموفق بود.\n';
-    const accountMessage=data?._doc?.payment_status==='success'? 'جهت دریافت اکانت روی گزینه نمایش اکانت ها کلیک نمایید.' : '';
-    await ctx.reply(statusMessage+`👜 شماره سفارش: ${data?._doc.order_id}\n🏆 اطلاعات اکانت: ${data.plan.duration} ماه - ${data.plan.multi} کاربر همزمان\n💴 مبلغ قابل پرداخت: ${data.plan.price} هزارتومان\n🔑 کد رهگیری زرین پال : ${data?._doc.ref_id || ''}\n❔ وضعیت سفارش: ${data?._doc?.payment_status==='success' ? 'موفق' : 'ناموفق'}\n💳 شماره کارت: ${data?._doc?.card_num || ''}`+`
-     ${accountMessage}`)
-}
+
 
 const createPayLink = (ctx,authority,order_id) => {
     const url=process.env.REDIRECT_URL;
@@ -289,7 +285,8 @@ const getServerDataByIP = async (ip) => {
 const saveAccountToDB = async (bot_id,username,password,exdate,server,multi,ssh_port) => {
   const userData=await userModel.findOne({bot_id:bot_id});
   if(userData){
-      await userModel.findOneAndUpdate({bot_id:bot_id},{accounts:[
+      await userModel.findOneAndUpdate({bot_id:bot_id},{
+          accounts:[
           ...userData.accounts,
               {
                   username:username,
@@ -305,8 +302,15 @@ const saveAccountToDB = async (bot_id,username,password,exdate,server,multi,ssh_
 
 }
 
-const generateUser =async (bot_id,plan_id,server) => {
-    const serverData=await getServerDataByIP(server);
+const sendAccountDataToTelegram = async (bot_id,username,password,multi,target_server,ssh_port,exdate) => {
+    const account= `👨🏼‍💼 نام کاربری: ${username}\n🗝 رمز عبور: ${password}\n📱 کاربر همزمان: ${multi}\n💻آی پی آدرس: ${target_server.split(':')[0]}\n🌐پورت: ${ssh_port || 22}\n📅 فعال تا تاریخ: ${exdate}`;
+    await bot.telegram.sendMessage(bot_id,'✅اکانت شما با موفقیت ساخته شد! \n\n'+account+'\n\n👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻\n آموزش اتصال اکانت ها در اندروید و  آیو اس:'+'\n @hyper_vpn_installation')
+}
+
+const generateUser =async (transaction) => {
+    const {bot_id,plan_id,target_server}=transaction;
+    //////
+    const serverData=await getServerDataByIP(target_server);
     const plan=filterPlan(plan_id);
     const duration=Number(plan.duration);
     const exdate=calculateExDate(duration)
@@ -319,16 +323,19 @@ const generateUser =async (bot_id,plan_id,server) => {
     });
 
     try {
-        const request=await f(`http://${server}/user-gen?`+query,{
+        const request=await f(`http://${target_server}/user-gen?`+query,{
             method:'POST',
             headers:{
                 'Content-Type':'application/json',
                 Authorization:`Bearer ${serverData.token}`
             },
-        })
+        });
         const response=await request.json();
         if(response.success){
-            await saveAccountToDB(bot_id,response.data[0].user,response.data[0].passwd,exdate,server,multi,serverData.ssh_port)
+            const username=response.data[0].user;
+            const password=response.data[0].passwd;
+            await saveAccountToDB(bot_id,username,password,exdate,target_server,multi,serverData.ssh_port);
+            await sendAccountDataToTelegram(bot_id,username,password,multi,target_server,serverData.ssh_port,exdate);
         }else{
             return false
         }
@@ -337,6 +344,13 @@ const generateUser =async (bot_id,plan_id,server) => {
     }
 }
 
+
+const sendTransactionStatus = async (transaction,ref_id,card_num,isSuccess) => {
+    const statusMessage=isSuccess ? '✅ تراکنش شما با موفقیت انجام شد.\n'  :  '❌ متاسفانه تراکنش شما ناموفق بود.\n';
+    const plan=filterPlan(transaction.plan_id);
+  await bot.telegram.sendMessage(transaction.bot_id,statusMessage+`👜 شماره سفارش: ${transaction.order_id}\n🏆 اطلاعات اکانت: ${plan.duration} ماه - ${plan.multi} کاربر همزمان\n💴 مبلغ قابل پرداخت: ${plan.price} هزارتومان\n🔑 کد رهگیری زرین پال : ${ref_id || ''}\n❔ وضعیت سفارش: ${isSuccess ? 'موفق' : 'ناموفق'}\n💳 شماره کارت: ${card_num || ''}`)
+}
+
 module.exports={
-    querySerialize,responseHandler,generateCommands,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan,showTransactionResult,createPayLink,createOrder,filterPlan,generateUser,queryValidation,invisibleServerIP,removeDuplicate,getPlanFromDB,problems
+    querySerialize,responseHandler,generateCommands,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan,createPayLink,createOrder,filterPlan,generateUser,queryValidation,invisibleServerIP,removeDuplicate,getPlanFromDB,problems,sendTransactionStatus
 }

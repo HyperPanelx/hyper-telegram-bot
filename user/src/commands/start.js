@@ -4,7 +4,7 @@ const transactionModel=require('../models/Transaction')
 const userModel=require('../models/User');
 const {addPhoneProcess}=require('../utils/addPhone')
 const {getOneQuestionState,getTwoQuestionState, resetAllStates, getThreeQuestionState}=require('../utils/states')
-const {generateCommands,getAdminsServersList,getZarinToken,extractPlan,showTransactionResult,queryValidation,getPlanFromDB,problems}=require('../utils/utils');
+const {generateCommands,getAdminsServersList,getZarinToken,queryValidation,getPlanFromDB,problems}=require('../utils/utils');
 const {SelectPlanProcess,selectServersProcess}=require('../utils/buyAccount');
 const {shareData}=require('../utils/shareData')
 const {resetAllAnswers, getThreeAnswersState} = require("../utils/answers");
@@ -18,20 +18,7 @@ bot.command('start', async ctx => {
     shareData.servers_list=await getAdminsServersList();
     shareData.zarinpal_token=await getZarinToken();
     shareData.plans=await getPlanFromDB();
-    ///failed
-    /// A00000
-    const getInitialMessage=ctx.update.message.text.split('/start')[1].trim();
-    if(getInitialMessage.includes('failed')){
-       ctx.reply('❌ یک مشکلی از طرف زرین پال بوجود آمد!')
-    }else if(getInitialMessage.startsWith('A0')){
-        const getTransaction=await transactionModel.findOne({transaction_id:getInitialMessage});
-        if(getTransaction){
-            const data=extractPlan(getTransaction);
-            await showTransactionResult(ctx,data);
-        }
-    }
-
-
+    //////////
     const {id,first_name,username}=ctx.from;
     const userData=await userModel.findOne({bot_id:id});
     if(userData){
