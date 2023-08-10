@@ -4,6 +4,7 @@ const adminModel=require('../models/Admin')
 const {resetAllStates}=require('./states')
 const {resetAllAnswers}=require('./answers')
 const {getServerData}=require('./addServer')
+const {bot} = require("../bot.config");
 
 
 
@@ -47,14 +48,52 @@ const getMe = async (ip,token) => {
 
 
 
- const generateCommands = async (ctx) => {
+ const generateMenu = async (ctx) => {
      const serverDataState=getServerData(ctx.chat.id)
-    await ctx.reply(`⚙️ کامند های فعال جهت کنترل سرور: ${serverDataState.ip}:\n💡 /users - لیست کاربران\n💡 /online - لیست کاربران آنلاین\n💡 /generate - تولید یک کاربر \n💡 /delete - حذف کاربر \n💡 /get_ip - دریافت آی پی های فعال روی اکانت \n💡 /unlock - آنلاک کردن کاربر\n💡 /lock - قفل کردن کاربر\n💡 /reset - ریست کردن  رمز کاربر\n💡 /create - ایجاد کاربر با دسترسی ادمین\n💡 /delete_admin - حذف کاربر ادمین\n💡 /referral_token - دریافت توکن معرفی\n💡 /change_multi -  تغییر کاربران همزمان اکانت\n💡 /get_transaction -  دریافت تراکنش با شماره سفارش\n💡 /show_ticket -  مشاهده تیکت های فعال\n💡 /answer_ticket -  پاسخ به تیکت\n💡 /add_paypal - اضافه کردن توکن زرین پال`,{
+    await ctx.reply(`⚙️🌎 عملیات های فعال جهت کنترل سرور ${serverDataState.ip}:`,{
         reply_markup:{
             inline_keyboard: [
-                [{text:'اضافه کردن سرور',callback_data: 'add_server'}],
-                [{text:'سویچ کردن بین سرور ها',callback_data: 'show_servers'}],
-                [{text:'حذف سرور',callback_data: 'show_to_remove_server'}],
+                [
+                    {text:'👨🏼‍💼لیست کاربران',callback_data: 'users_list'},
+                    {text:'💡لیست کاربران آنلاین',callback_data: 'online_list'}
+                ],
+                [
+                    {text:'💡لیست کاربران آنلاین',callback_data: 'online_list'},
+                    {text:'⚡️تولید کاربر',callback_data: 'generate_user'}
+                ],
+                [
+                    {text:'🗑حذف یک کاربر',callback_data: 'delete_user'},
+                    {text:'⚡️اضافه کردن مولتی سرور',callback_data: 'add_multi'}
+                ],
+                [
+                    {text:'👀مشاهده مولتی سرور',callback_data: 'show_multi'},
+                    {text:'💡دریافت آی پی فعال اکانت',callback_data: 'get_ip'}
+                ],
+                [
+                    {text:'🔓آنلاک کردن کاربر',callback_data: 'unlock_user'},
+                    {text:'🔓قفل کردن کاربر',callback_data: 'lock_user'}
+                ],
+                [
+                    {text:'♻️ریست کردن رمز کاربر',callback_data: 'reset_password'},
+                    {text:'👤ایجاد کاربر ادمین',callback_data: 'create_admin'}
+                ],
+                [
+                    {text:'🗑حذف کاربر ادمین',callback_data: 'delete_admin'},
+                    {text:'⚡️دریافت توکن معرفی',callback_data: 'get_referral'}
+
+                ],
+                [
+                    {text:'🎗تغییر کاربران همزمان اکانت',callback_data: 'change_multi'},
+                    {text:'💶دریافت تراکنش با شماره سفارش',callback_data: 'get_transaction'}
+                ],
+                [
+                    {text:'👀مشاهده تیکت های فعال',callback_data: 'show_ticket'},
+                    {text:'✍پاسخ به تیکت',callback_data: 'answer_ticket'}
+                ],
+                [
+                    {text:'⚡️اضافه کردن توکن زرین پال',callback_data: 'add_paypal'},
+                    {text:'🗑حذف سرور',callback_data: 'remove_server'}
+                ],
             ],
         }
     })
@@ -62,7 +101,7 @@ const getMe = async (ip,token) => {
 
 
 const commandValidation =async (callback,ctx) => {
-    const serverDataState=getServerData(ctx.chat.id)
+    const serverDataState=getServerData(ctx.chat.id);
     const adminData=await adminModel.findOne({bot_id:ctx.from.id});
   if(serverDataState.ip && serverDataState.token){
       resetAllAnswers(ctx.chat.id);
@@ -70,16 +109,12 @@ const commandValidation =async (callback,ctx) => {
       callback()
   }else{
       if(adminData){
-          const servers_list=adminData.server.map((item)=>{
-              return [{text:item.ip+` - ssh: ${item.ssh_port}`,callback_data: `select_server-${item.ip}`}]
-          });
           ctx.reply(
-              `✅ سلا دوست عزیز, شما ${adminData.server.length} سرور فعال دارید. جهت ادامه کار یک سرور را انتخاب کنید.`,
+              `✅ سلام دوست عزیز, شما یک سرور فعال دارید. جهت ادامه کار یک آنرا انتخاب کنید.`,
               {
                   reply_markup: {
                       inline_keyboard: [
-                          ...servers_list,
-                          [{text:'اضافه کردن سرور',callback_data: 'add_server'}],
+                          [{text:adminData.server.ip+` - ssh: ${adminData.server.ssh_port}`,callback_data: `select_server`}]
                       ],
                   }
               })
@@ -133,13 +168,13 @@ const getOnlineUsersList = async (ctx) => {
     }
 };
 
-const generateUser =async (multi,exdate,count,ctx) => {
+const generateUser =async (multi,exdate,count,ip,ctx) => {
     const serverDataState=getServerData(ctx.chat.id)
     const query=querySerialize({
         multi:Number(multi),
         exdate:exdate,
         count:Number(count),
-        server:'localhost',
+        server:ip || 'localhost',
     });
     try {
         const request=await f(`http://${serverDataState.ip}/user-gen?`+query,{
@@ -310,7 +345,49 @@ const getIPRequest=async (ctx,username,new_multi)=>{
 
 }
 
+const addMultiRequest=async (ctx,ip,username,password,port)=>{
+    const serverDataState=getServerData(ctx.chat.id)
+    const query=querySerialize({
+        ip_address:ip,
+        port:port,
+        user:username,
+        password:password
+    })
+    try {
+        const request=await f(`http://${serverDataState.ip}/server-add?`+query,{
+            headers:{
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${serverDataState.token}`
+            },
+        })
+        const response=await request.json();
+        return !!response.success;
+    }catch (err) {
+        return false
+    }
 
+}
+
+const getMultiRequest=async (ctx)=>{
+    const serverDataState=getServerData(ctx.chat.id)
+    try {
+        const request=await f(`http://${serverDataState.ip}/server-list`,{
+            headers:{
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${serverDataState.token}`
+            },
+        })
+        const response=await request.json();
+        if(response.success){
+            return response.data
+        }else{
+            return false
+        }
+    }catch (err) {
+        return false
+    }
+
+}
 module.exports={
-    querySerialize,responseHandler,urlEncode,generateCommands,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword,createAdmin,deleteAdminUser,changeMulti,getIPRequest
+    querySerialize,responseHandler,urlEncode,generateMenu,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword,createAdmin,deleteAdminUser,changeMulti,getIPRequest,addMultiRequest,getMultiRequest
 }

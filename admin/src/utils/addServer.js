@@ -84,12 +84,12 @@ const addServerProcess = async (ctx,txt) => {
         const access_token=await validateServer(fiveAnswerState.first,fiveAnswerState.second,fiveAnswerState.third,fiveAnswerState.fourth);
         if(access_token){
             await ctx.reply('✅ عملیات احرازهویت سرور با موفقیت انجام شد. جهت ادامه کار کامند start/ را وارد نمایید.');
-            const adminData=await adminModel.findOne({bot_id:ctx.from.id});
             await adminModel.findOneAndUpdate({bot_id:ctx.from.id},{
-                    server: [
-                        ...adminData.server,
-                        {ip:`${fiveAnswerState.first}:${fiveAnswerState.fourth}`,token:access_token,ssh_port:fiveAnswerState.fifth}
-                    ]
+                    server:{
+                        ip:`${fiveAnswerState.first}:${fiveAnswerState.fourth}`,
+                        token:access_token,
+                        ssh_port:fiveAnswerState.fifth
+                    }
                 },
             );
         }else{

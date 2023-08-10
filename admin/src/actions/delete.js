@@ -3,7 +3,7 @@ const {commandValidation}=require('../utils/utils')
 const {getOneQuestionState}=require('../utils/states')
 
 
-bot.command('delete',async (ctx)=>{
+bot.action('delete_user',async (ctx)=>{
     await commandValidation(async ()=>{
         const oneQuestionState=getOneQuestionState(ctx.chat.id)
         oneQuestionState.key='delete_user'

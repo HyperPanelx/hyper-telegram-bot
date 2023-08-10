@@ -1,4 +1,4 @@
-const {changeMulti,generateCommands}=require('./utils')
+const {changeMulti}=require('./utils')
 const {resetAllStates, getTwoQuestionState}=require('./states')
 const {resetAllAnswers, getTwoAnswersState}=require('./answers')
 
@@ -18,10 +18,21 @@ const changeMultiProcess = async (ctx,txt) => {
         twoAnswersState.second=txt
         const isCreated=await changeMulti(ctx,twoAnswersState.first,twoAnswersState.second);
         if(isCreated){
-            await ctx.reply(`✅ تعداد کاربران همزمان این کاربر با موفقیت تغییر کرد.`);
-            await generateCommands(ctx);
+            await ctx.reply(`✅ تعداد کاربران همزمان این کاربر با موفقیت تغییر کرد.`,{
+                reply_markup: {
+                    inline_keyboard: [
+                        [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
+                    ]
+                }
+            });
         }else{
-            await ctx.reply('❌ عدم امکان برقرای ارتباط با سرور.');
+            await ctx.reply('❌ عدم امکان برقرای ارتباط با سرور.',{
+                reply_markup: {
+                    inline_keyboard: [
+                        [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
+                    ]
+                }
+            });
         }
         resetAllAnswers(ctx.chat.id);
         resetAllStates(ctx.chat.id)

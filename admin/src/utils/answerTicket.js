@@ -1,4 +1,4 @@
-const {generateCommands}=require('./utils')
+
 const {resetAllStates, getTwoQuestionState}=require('./states')
 const {resetAllAnswers, getTwoAnswersState}=require('./answers')
 const ticketModel=require('../models/Ticket')
@@ -20,11 +20,22 @@ const answerTicketProcess = async (ctx,txt) => {
         if(isTicketNumberValid){
             await ticketModel.
             findOneAndUpdate({ticket_id:twoAnswersState.first},{answer:twoAnswersState.second,isActive:false});
-            await ctx.reply('✅ پیغام شما برای کاربر ارسال شد.')
+            await ctx.reply('✅ پیغام شما برای کاربر ارسال شد.',{
+                reply_markup: {
+                   inline_keyboard: [
+                       [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
+                   ]
+               }
+            })
         }else{
-            await ctx.reply('❌ شماره تیکت پیدا نشد.')
+            await ctx.reply('❌ شماره تیکت پیدا نشد.',{
+                reply_markup: {
+                   inline_keyboard: [
+                       [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
+                   ]
+               }
+            })
         }
-        await generateCommands(ctx)
         resetAllAnswers(ctx.chat.id);
         resetAllStates(ctx.chat.id)
 

@@ -1,4 +1,4 @@
-const {createAdmin,generateCommands}=require('./utils')
+const {createAdmin}=require('./utils')
 const {resetAllStates,getThreeQuestionState}=require('./states')
 const {resetAllAnswers, getThreeAnswersState}=require('./answers')
 
@@ -22,10 +22,21 @@ const createAdminProcess = async (ctx,txt) => {
         threeAnswersState.third=txt
         const isCreated=await createAdmin(ctx,threeAnswersState.first,threeAnswersState.second,threeAnswersState.third);
         if(isCreated){
-            await ctx.reply(`✅ کاربر ادمین با موفقیت اضافه شد.`);
-            await generateCommands(ctx);
+            await ctx.reply(`✅ کاربر ادمین با موفقیت اضافه شد.`,{
+                reply_markup: {
+                    inline_keyboard: [
+                        [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
+                    ]
+                }
+            });
         }else{
-            await ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.');
+            await ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.',{
+                reply_markup: {
+                    inline_keyboard: [
+                        [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
+                    ]
+                }
+            });
         }
         resetAllAnswers(ctx.chat.id);
         resetAllStates(ctx.chat.id);

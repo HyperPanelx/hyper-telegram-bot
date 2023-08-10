@@ -3,7 +3,7 @@ const {commandValidation} = require("../utils/utils");
 const {getTwoQuestionState}=require('../utils/states')
 
 
-bot.command('reset',async (ctx)=>{
+bot.action('reset_password',async (ctx)=>{
     await commandValidation(async ()=>{
         const twoQuestionState=getTwoQuestionState(ctx.chat.id)
         twoQuestionState.key='reset_password'

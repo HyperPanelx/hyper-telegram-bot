@@ -4,7 +4,7 @@ const {getThreeQuestionState}=require('../utils/states')
 
 
 
-bot.command('create',async (ctx)=>{
+bot.action('create_admin',async (ctx)=>{
     await commandValidation(async ()=>{
         const threeQuestionState=getThreeQuestionState(ctx.chat.id)
         threeQuestionState.key='create_admin'

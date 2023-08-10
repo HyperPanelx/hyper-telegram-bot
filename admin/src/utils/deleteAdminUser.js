@@ -1,4 +1,4 @@
-const {deleteAdminUser, generateCommands}=require('./utils')
+const {deleteAdminUser}=require('./utils')
 const {resetAllStates}=require('../utils/states')
 const {resetAllAnswers}=require('../utils/answers')
 const {getOneQuestionState} = require("./states");
@@ -13,10 +13,21 @@ const deleteAdminUserProcess = async (ctx,txt) => {
       oneAnswerState.first=txt
       const isDeleted=await deleteAdminUser(ctx,oneAnswerState.first);
       if(isDeleted){
-          await ctx.reply(`✅ کاربر ادمین با موفقیت حذف شد.`)
-          await generateCommands(ctx)
+          await ctx.reply(`✅ کاربر ادمین با موفقیت حذف شد.`,{
+              reply_markup: {
+                  inline_keyboard: [
+                      [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
+                  ]
+              }
+          })
       }else{
-          await ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.')
+          await ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.',{
+              reply_markup: {
+                  inline_keyboard: [
+                      [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
+                  ]
+              }
+          })
       }
       resetAllAnswers(ctx.chat.id)
       resetAllStates(ctx.chat.id)

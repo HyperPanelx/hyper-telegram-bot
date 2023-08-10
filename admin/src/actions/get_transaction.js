@@ -3,7 +3,7 @@ const {commandValidation}=require('../utils/utils')
 const {getOneQuestionState}=require('../utils/states')
 
 
-bot.command('get_transaction',async (ctx)=>{
+bot.action('get_transaction',async (ctx)=>{
     await commandValidation(async ()=>{
         const oneQuestionState=getOneQuestionState(ctx.chat.id)
         oneQuestionState.key='get_transaction'

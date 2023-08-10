@@ -1,4 +1,4 @@
-const { generateCommands}=require('./utils')
+
 const {resetAllStates, getOneQuestionState}=require('./states')
 const {resetAllAnswers, getOneAnswersState}=require('./answers')
 const transactionModel=require('../models/Transaction')
@@ -22,11 +22,22 @@ const getTransactionProcess = async (ctx,txt) => {
 💡 وضعیت پرداخت: ${payment_status==='success' ? 'موفق' :payment_status==='waiting payment' ? 'در انتظار پرداخت' : 'ناموفق'}`+`
  📡 سرور انتخاب شده توسط کاربر: ${target_server}`+`\n⏰ زمان اخرین اپدیت: ${updated_at}`+`\n⏰ زمان ساخت تراکنش: ${created_at}`+`
 💳 شماره کارت : ${card_num || ''}`+`\n👨🏼‍💼نام کاربر: ${tel_name || ''}\n👨🏼‍💼 نام کاربری تلگرام: ${tel_username || ''}\n📱 شماره موبایل کاربر: ${phone}`
-          await ctx.reply(detail)
+          await ctx.reply(detail,{
+              reply_markup: {
+                  inline_keyboard: [
+                      [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
+                  ]
+              }
+          })
       }else{
-          await ctx.reply('❌ تراکنشی با این شماره سفارش یافت نشد!')
+          await ctx.reply('❌ تراکنشی با این شماره سفارش یافت نشد!',{
+              reply_markup: {
+                  inline_keyboard: [
+                      [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
+                  ]
+              }
+          })
       }
-      await generateCommands(ctx)
       resetAllAnswers(ctx.chat.id);
       resetAllStates(ctx.chat.id);
   }
