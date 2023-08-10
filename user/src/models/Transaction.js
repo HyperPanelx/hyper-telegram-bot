@@ -44,6 +44,13 @@ const transactionSchema=mongoose.Schema({
         minLength:1,
         maxLength:200,
     },
+    target_multi:{
+        type:String,
+        required:true,
+        trim:true,
+        minLength:1,
+        maxLength:200,
+    },
     payment_status:{
         type:String,
         required:true,

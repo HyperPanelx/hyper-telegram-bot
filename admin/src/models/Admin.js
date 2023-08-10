@@ -45,6 +45,10 @@ const adminSchema=mongoose.Schema({
         type:serverSchema,
         required:false,
     },
+    multi:{
+        type:Array,
+        required:false,
+    },
     referral_token:{
         type:String,
         required:false,

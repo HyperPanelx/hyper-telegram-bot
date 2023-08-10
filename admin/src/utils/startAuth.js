@@ -32,22 +32,16 @@ const startAuthProcess = async (ctx,txt) => {
         threeQuestionState.third=false
         /// username
         threeAnswersState.second=txt
-        ctx.reply('نام کاربری ادمین را وارد نمایید:')
+        ctx.reply('پسورد ادمین را وارد نمایید:')
     }else if(threeAnswersState.first && threeAnswersState.second && !threeQuestionState.first && !threeQuestionState.second && !threeQuestionState.third){
         /// password
         threeAnswersState.third=txt
         const new_token=await validateServer(threeAnswersState.first,threeAnswersState.second,threeAnswersState.third);
         if(new_token){
-            const getAdmin=await adminModel.findOne({bot_id:ctx.from.id});
-            const adminServers=[...getAdmin.server];
-            const changedTokenServers=adminServers.map(item=>{
-                if(item.ip===threeAnswersState.first){
-                    return {ip:threeAnswersState.first,token:new_token}
-                }else{
-                    return item
-                }
-            });
-            await adminModel.findOneAndUpdate({bot_id:ctx.from.id},{server:changedTokenServers});
+            const admin=await adminModel.findOne({bot_id:ctx.from.id});
+            admin.server.token=new_token
+            admin.server.ip=threeAnswersState.first
+            await admin.save();
             ctx.reply('✅ احرازهویت موفقیت آمیز بود. جهت ادامه کار کامند start/ را وارد نمایید.')
         }else{
             ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.')

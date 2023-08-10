@@ -1,5 +1,30 @@
 const mongoose=require('mongoose')
 
+const serverSchema=mongoose.Schema({
+    ip:{
+        type:String,
+        required:true,
+        trim:true,
+        minLength:1,
+        maxLength:200
+    },
+    token:{
+        type:String,
+        required:true,
+        trim:true,
+        minLength:1,
+        maxLength:200
+    },
+    ssh_port:{
+        type:String,
+        required:true,
+        trim:true,
+        minLength:1,
+        maxLength:200
+    },
+})
+
+
 
 const adminSchema=mongoose.Schema({
     firstname:{
@@ -17,6 +42,10 @@ const adminSchema=mongoose.Schema({
         maxLength:200
     },
     server:{
+        type:serverSchema,
+        required:false,
+    },
+    multi:{
         type:Array,
         required:false,
     },

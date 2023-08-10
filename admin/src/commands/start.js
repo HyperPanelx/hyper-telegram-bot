@@ -38,6 +38,7 @@ bot.command('start', async ctx => {
                 bot_id:id,
                 firstname:first_name,
                 referral_token:nanoid.nanoid(32),
+                multi:[]
             });
             newUser.
             save().

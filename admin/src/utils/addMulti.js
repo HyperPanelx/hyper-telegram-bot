@@ -29,9 +29,10 @@ const addMultiServerProcess = async (ctx,txt) => {
         /// port
         fourAnswerState.fourth=txt;
         // request
-        const isAdded=await addMultiRequest(ctx,fourAnswerState.first,fourAnswerState.second,fourAnswerState.third,fourAnswerState.fourth)
-        if(isAdded){
-            await ctx.reply('✅ سرور با موفقیت اضافه شد.',{
+        const adminData=await adminModel.findOne({bot_id:ctx.from.id});
+        const isExist=adminData.multi.some(item=>item===fourAnswerState.first);
+        if(isExist){
+            await ctx.reply('❌ یک سرور با همین آی پی قبلا ثبت شده است.',{
                 reply_markup: {
                     inline_keyboard: [
                         [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
@@ -39,13 +40,26 @@ const addMultiServerProcess = async (ctx,txt) => {
                 }
             })
         }else{
-            await ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.',{
-                reply_markup: {
-                    inline_keyboard: [
-                        [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
-                    ]
-                }
-            })
+            const isAdded=await addMultiRequest(ctx,fourAnswerState.first,fourAnswerState.second,fourAnswerState.third,fourAnswerState.fourth)
+            if(isAdded){
+                adminData.multi.push(fourAnswerState.first)
+                adminData.save()
+                await ctx.reply('✅ سرور با موفقیت اضافه شد.',{
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
+                        ]
+                    }
+                })
+            }else{
+                await ctx.reply('❌ عدم امکان برقراری ارتباط با سرور.',{
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{text: '🗓نمایش منو', callback_data: 'show_menu'}],
+                        ]
+                    }
+                })
+            }
         }
 
         resetAllStates(ctx.chat.id)

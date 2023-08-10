@@ -65,12 +65,11 @@ bot.action('remove_zarinpal_token',async (ctx)=>{
 
 bot.action('start_authentication',async ctx=>{
     const getAdminData=await adminModel.findOne({bot_id:ctx.from.id});
-    const server_ip=getAdminData.server.ip;
     const threeQuestionState=getThreeQuestionState(ctx.chat.id);
     const threeAnswersState=getThreeAnswersState(ctx.chat.id);
     threeQuestionState.key='start_authentication';
     threeQuestionState.third=true;
-    threeAnswersState.first=server_ip;
+    threeAnswersState.first=getAdminData.server.ip;
     ctx.reply('نام کاربری ادمین را وارد نمایید:')
 })
 

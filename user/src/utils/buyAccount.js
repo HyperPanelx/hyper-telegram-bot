@@ -44,7 +44,7 @@ const selectServersProcess = async (ctx,query) => {
     twoAnswersState.second=query.split('-')[1];
     /// order data
     const order_data=getOrderData(twoAnswersState.first,twoAnswersState.second);
-    //// get authority
+    // //// get authority
     const order_id=nanoid.nanoid(28);
     const authority=await requestAuthority(order_data.plan.price,ctx.botInfo.username,order_id);
     if(authority ){
@@ -56,7 +56,8 @@ const selectServersProcess = async (ctx,query) => {
             order_id:order_id,
             transaction_id:authority,
             plan_id:order_data.plan.id,
-            target_server:order_data.server.ip,
+            target_server:order_data.server.api,
+            target_multi:order_data.server.multi,
             payment_status:'waiting payment',
             created_at:date.toLocaleString(),
             updated_at:date.toLocaleString(),

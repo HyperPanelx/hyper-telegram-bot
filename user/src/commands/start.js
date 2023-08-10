@@ -18,6 +18,7 @@ bot.command('start', async ctx => {
     shareData.servers_list=await getAdminsServersList();
     shareData.zarinpal_token=await getZarinToken();
     shareData.plans=await getPlanFromDB();
+
     //////////
     const {id,first_name,username}=ctx.from;
     const userData=await userModel.findOne({bot_id:id});

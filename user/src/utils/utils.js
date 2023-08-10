@@ -107,9 +107,7 @@ const extractIps = (server) => {
                 return item.ip
             }
         });
-        return edit2.flat().map(item=>{
-            return /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/.exec(item)[0]
-        })
+        return edit2.flat();
     }else{
         return  [];
     }
@@ -134,33 +132,46 @@ const removeDuplicate = (arr) => {
 
 
 const getAdminsServersList = async () => {
-    const adminData=await adminModel.$where('this.server.length>0');
-    const isServerAvailable=adminData.filter(item=>item.server.length>0);
-    const edit1=isServerAvailable.map(item=>{
-        if(item.server.length>0){
-            return item.server
-        }
-    });
-
-    if(edit1.length>0){
-        const edit2=edit1.map(item=>{
-            if(item){
-                return  item.map(server=>{
-                    return {
-                        ip:server.ip,
-                        token:server.token,
-                        ssh_port:server.ssh_port
+    const adminsData=await adminModel.$where('this.server.ip');
+    if(adminsData.length>0){
+        const res=adminsData.map(p1=>{
+            if(p1.multi.length>0){
+                const embed=p1.multi.map(p2=>{
+                    return{
+                        multi:p2,
+                        ip:p2.split(':')[0],
+                        api:p1.server.ip,
+                        token:p1.server.token,
+                        ssh_port:p1.server.ssh_port,
                     }
                 })
+               return  [
+                   ...embed,
+                   {
+                       ip:p1.server.ip.split(':')[0],
+                       multi:'localhost',
+                       api:p1.server.ip,
+                       token:p1.server.token,
+                       ssh_port:p1.server.ssh_port,
+                   }
+               ]
+            }else{
+                return {
+                    ip:p1.server.ip.split(':')[0],
+                    multi:'localhost',
+                    api:p1.server.ip,
+                    token:p1.server.token,
+                    ssh_port:p1.server.ssh_port,
+                }
             }
-        });
-        return removeDuplicate(edit2.flat())
+        })
+        return  removeDuplicate(res.flat())
     }else{
-        return  [];
+        return []
     }
 }
 const getZarinToken =async () => {
-    const hasToken=await adminModel.$where('this.zarinpal_token.length>0');
+    const hasToken=await adminModel.$where('this.zarinpal_token && this.zarinpal_token.length>0');
     if(hasToken.length>0){
         return hasToken[0].zarinpal_token
     }else{
@@ -278,7 +289,7 @@ const calculateExDate = (addMonth) => {
 }
 const getServerDataByIP = async (ip) => {
     shareData.servers_list=await getAdminsServersList();
-   return shareData.servers_list.filter(item=>item.ip===ip)[0];
+   return shareData.servers_list.filter(item=>item.api===ip)[0];
 }
 
 
@@ -308,7 +319,7 @@ const sendAccountDataToTelegram = async (bot_id,username,password,multi,target_s
 }
 
 const generateUser =async (transaction) => {
-    const {bot_id,plan_id,target_server}=transaction;
+    const {bot_id,plan_id,target_server,target_multi}=transaction;
     //////
     const serverData=await getServerDataByIP(target_server);
     const plan=filterPlan(plan_id);
@@ -319,7 +330,7 @@ const generateUser =async (transaction) => {
         multi:multi,
         exdate:exdate,
         count:1,
-        server:'localhost',
+        server:target_multi,
     });
 
     try {
