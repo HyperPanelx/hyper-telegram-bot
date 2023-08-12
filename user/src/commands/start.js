@@ -2,10 +2,8 @@ require('dotenv').config()
 const {bot}=require('../bot.config')
 const transactionModel=require('../models/Transaction')
 const userModel=require('../models/User');
-const {addPhoneProcess}=require('../utils/addPhone')
-const {getOneQuestionState,getTwoQuestionState, resetAllStates, getThreeQuestionState}=require('../utils/states')
-const {generateCommands,getAdminsServersList,getZarinToken,queryValidation,getPlanFromDB,problems}=require('../utils/utils');
-const {SelectPlanProcess,selectServersProcess}=require('../utils/buyAccount');
+const { resetAllStates, getThreeQuestionState}=require('../utils/states')
+const {generateCommands,getAdminsServersList,getZarinToken,queryValidation,getPlanFromDB,problems,sendTransactionStatus,generateUser}=require('../utils/utils');
 const {shareData}=require('../utils/shareData')
 const {resetAllAnswers, getThreeAnswersState} = require("../utils/answers");
 const {sendTicketProcess} = require("../utils/sendTicket");
@@ -20,33 +18,20 @@ bot.command('start', async ctx => {
     shareData.plans=await getPlanFromDB();
 
     //////////
-    const {id,first_name,username}=ctx.from;
+    const {id,username}=ctx.from;
     const userData=await userModel.findOne({bot_id:id});
-    if(userData){
-        if(userData.phone.length>0){
-            await generateCommands(ctx)
-        }else{
-            const oneQuestionState=getOneQuestionState(ctx.chat.id);
-            oneQuestionState.key='add_phone'
-            oneQuestionState.first=true
-            ctx.reply(`🌎️ سلام دوست عزیز,\nبه ربات هایپر خوش بازگشتید. جهت خدمات بهتر ابتدا شماره موبایل خود را وارد نمایید:`);
-        }
-    }else{
+    if(!userData){
         const newUser=new userModel({
-            tel_name:first_name || 'unknown',
-            tel_username:username || 'unknown',
+            tel_username:username.length>0 ? username  : 'unknown',
             bot_id:id,
-            phone:'',
             accounts:[]
         });
         await newUser.save();
-        const oneQuestionState=getOneQuestionState(ctx.chat.id);
-        oneQuestionState.key='add_phone'
-        oneQuestionState.first=true
-        ctx.reply( `🌎️ سلام دوست عزیز,\nبه ربات هایپر خوش آمدید. جهت خدمات بهتر ابتدا شماره موبایل خود را وارد نمایید:`);
-
     }
+    await generateCommands(ctx);
 });
+
+
 bot.action(/^ticket_title/g,async (ctx)=>{
     const threeQuestionState=getThreeQuestionState(ctx.chat.id);
     const threeAnswersState=getThreeAnswersState(ctx.chat.id);
@@ -66,40 +51,38 @@ bot.action(/^ticket_title/g,async (ctx)=>{
 
 
 
-bot.on('callback_query', async (ctx) => {
+bot.action(/^cancel_order/,async ctx=>{
     await queryValidation(async ()=>{
-        const query=ctx.update.callback_query.data;
-        const twoQuestionState=getTwoQuestionState(ctx.chat.id);
-        if(twoQuestionState.key==='buy_account'){
-            if(query.includes('select_plan') && twoQuestionState.first){
-                await SelectPlanProcess(ctx,query);
-
-            }else if(query.includes('select_server') && twoQuestionState.second){
-                await selectServersProcess(ctx,query);
-
-            }
-        }
-
-        if(query.includes('cancel_order')){
-            const date=new Date();
-            const transaction_id=query.split('-')[1];
-            await transactionModel.findOneAndUpdate({transaction_id:transaction_id},{payment_status:'failed',updated_at:date.toLocaleString()});
-            await ctx.reply('✅ سفارش شما با موفقیت کنسل شد!')
-            await generateCommands(ctx)
-        }
-
-    },ctx,false,true)
-
-
+        const date=new Date();
+        const transaction_id=ctx.match['input'].split(':')[1];
+        await transactionModel.findOneAndUpdate({transaction_id:transaction_id},{payment_status:'failed',updated_at:date.toLocaleString()});
+        await ctx.reply('✅ سفارش شما با موفقیت کنسل شد!')
+        await generateCommands(ctx)
+    })
 })
 
+bot.action(/^check_transaction/,async ctx=>{
+    await queryValidation(async ()=>{
+        const order_id=ctx.match['input'].split(':')[1];
+        const transactionData=await transactionModel.findOne({order_id,payment_status:'waiting payment',payment_mode:'card_to_card',is_submitted:true});
+        if(transactionData){
+            //// send transaction data to telegram chat
+            await sendTransactionStatus(transactionData,'','',true)
+            //// create user
+            await generateUser(transactionData);
+            //// update transaction
+            transactionData.payment_status='success'
+            await transactionData.save()
+        }else{
+            ctx.reply('⏰ تراکنش در دست بررسی می باشد. لطفا کمی صبور باشید.');
+        }
+    })
+})
 
 
 bot.on('message',  async (ctx) =>{
     const txt=ctx.update.message.text;
-    const oneQuestionState=getOneQuestionState(ctx.chat.id);
     const threeQuestionState=getThreeQuestionState(ctx.chat.id);
-    oneQuestionState.key==='add_phone' && await addPhoneProcess(ctx,txt);
     threeQuestionState.key==='send_ticket' && await sendTicketProcess(ctx,txt);
 });
 

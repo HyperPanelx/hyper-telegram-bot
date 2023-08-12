@@ -5,6 +5,7 @@ const {commandValidation,getMultiRequest}=require('../utils/utils')
 
 
 bot.action('show_multi',async (ctx)=>{
+    await ctx.reply('لطفا چند لحظه صبر کنید...')
     await commandValidation(async ()=>{
         const getMultiServers=await getMultiRequest(ctx);
         if(getMultiServers && getMultiServers.length>0){

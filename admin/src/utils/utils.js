@@ -58,15 +58,15 @@ const getMe = async (ip,token) => {
                     {text:'💡لیست کاربران آنلاین',callback_data: 'online_list'}
                 ],
                 [
-                    {text:'💡لیست کاربران آنلاین',callback_data: 'online_list'},
+                    {text:'🗑حذف یک کاربر',callback_data: 'delete_user'},
                     {text:'⚡️تولید کاربر',callback_data: 'generate_user'}
                 ],
                 [
-                    {text:'🗑حذف یک کاربر',callback_data: 'delete_user'},
+                    {text:'👀مشاهده مولتی سرور',callback_data: 'show_multi'},
                     {text:'⚡️اضافه کردن مولتی سرور',callback_data: 'add_multi'}
                 ],
                 [
-                    {text:'👀مشاهده مولتی سرور',callback_data: 'show_multi'},
+                    {text:'♻️ریست کردن رمز کاربر',callback_data: 'reset_password'},
                     {text:'💡دریافت آی پی فعال اکانت',callback_data: 'get_ip'}
                 ],
                 [
@@ -74,16 +74,16 @@ const getMe = async (ip,token) => {
                     {text:'🔓قفل کردن کاربر',callback_data: 'lock_user'}
                 ],
                 [
-                    {text:'♻️ریست کردن رمز کاربر',callback_data: 'reset_password'},
+                    {text:'🗑حذف کاربر ادمین',callback_data: 'delete_admin'},
                     {text:'👤ایجاد کاربر ادمین',callback_data: 'create_admin'}
                 ],
                 [
-                    {text:'🗑حذف کاربر ادمین',callback_data: 'delete_admin'},
+                    {text:'🎗تغییر کاربران همزمان اکانت',callback_data: 'change_multi'},
                     {text:'⚡️دریافت توکن معرفی',callback_data: 'get_referral'}
 
                 ],
                 [
-                    {text:'🎗تغییر کاربران همزمان اکانت',callback_data: 'change_multi'},
+                    {text:'⚡️اضافه کردن توکن زرین پال',callback_data: 'add_paypal'},
                     {text:'💶دریافت تراکنش با شماره سفارش',callback_data: 'get_transaction'}
                 ],
                 [
@@ -91,7 +91,6 @@ const getMe = async (ip,token) => {
                     {text:'✍پاسخ به تیکت',callback_data: 'answer_ticket'}
                 ],
                 [
-                    {text:'⚡️اضافه کردن توکن زرین پال',callback_data: 'add_paypal'},
                     {text:'🗑حذف سرور',callback_data: 'remove_server'}
                 ],
             ],
@@ -108,8 +107,8 @@ const commandValidation =async (callback,ctx) => {
       resetAllStates(ctx.chat.id);
       callback()
   }else{
-      if(adminData){
-          ctx.reply(
+      if(adminData.server.ip && adminData.server.ssh_port){
+          await ctx.reply(
               `✅ سلام دوست عزیز, شما یک سرور فعال دارید. جهت ادامه کار یک آنرا انتخاب کنید.`,
               {
                   reply_markup: {
@@ -117,6 +116,17 @@ const commandValidation =async (callback,ctx) => {
                           [{text:adminData.server.ip+` - ssh: ${adminData.server.ssh_port}`,callback_data: `select_server`}]
                       ],
                   }
+              })
+      }else{
+         await ctx.reply(
+              `✅ سلام دوست عزیز,\nخوش آمدید. آیا مایل به اضافه کردن یک سرور هستید؟`,
+              {
+                  reply_markup: {
+                      inline_keyboard: [
+                          [{ text: '✅ بله', callback_data: 'add_server',  }],
+                          [{ text: '❌ خیر', callback_data: 'cancel_add_server' }],
+                      ],
+                  },
               })
       }
 
@@ -134,7 +144,7 @@ const getUsersList = async (ctx) => {
         const response=await request.json();
         if(response.success){
             return response.data.map(item=>{
-                return  `👨🏼‍💼نام کاربری:  ${item.user}\nرمز عبور:  ${item.passwd}\nتعداد کاربر همزمان:  ${item.multi}\nتاریخ انقضا:  ${item.exdate}\nوضعیت:  ${item.status==='enable' ? 'فعال' : 'غیر فعال'}\n<--------------------------------------->\n`
+                return  `👨🏼‍💼نام کاربری:  ${item.user}\nرمز عبور:  ${item.passwd}\nتعداد کاربر همزمان:  ${item.multi}\nتاریخ انقضا:  ${item.exdate}\nوضعیت:  ${item.status==='enable' ? 'فعال' : 'غیر فعال'}\n ساخته شده در سرور: ${item.server.length>0 ? item.server : ' localhost'}\n<--------------------------------------->\n`
             }).join('');
         }else{
             return false
@@ -145,17 +155,22 @@ const getUsersList = async (ctx) => {
     }
 }
 
-const getOnlineUsersList = async (ctx) => {
+const getOnlineUsersList = async (ctx,multi) => {
     const serverDataState=getServerData(ctx.chat.id)
     try {
-        const request=await f(`http://${serverDataState.ip}/user-active?server=localhost`,{
+        const request=await f(`http://${serverDataState.ip}/user-active?server=${multi||'localhost'}`,{
             headers:{
                 'Authorization':`Bearer ${serverDataState.token}`
             }
         });
         const response=await request.json();
-        if(response.users){
+        if(response.users  && Object.keys(response.users).length>0){
             const responseEntries=Object.entries(response.users);
+            return responseEntries.map(item=>{
+                return  `👨🏼‍💼 نام کاربری: ${item[0]}\n📱 تعداد دستگاه متصل: ${item[1]}`
+            }).join('\n<-------------------------------------------->\n');
+        }else if(response.data.users && Object.keys(response.data.users).length>0){
+            const responseEntries=Object.entries(response.data.users);
             return responseEntries.map(item=>{
                 return  `👨🏼‍💼 نام کاربری: ${item[0]}\n📱 تعداد دستگاه متصل: ${item[1]}`
             }).join('\n<-------------------------------------------->\n');
@@ -388,6 +403,67 @@ const getMultiRequest=async (ctx)=>{
     }
 
 }
+
+
+
+const removeDuplicate = (arr,key) => {
+    const uniqueServers = [];
+    return  arr.filter(element => {
+        const isDuplicate = uniqueServers.includes(element[key]);
+
+        if (!isDuplicate) {
+            uniqueServers.push(element[key]);
+
+            return true;
+        }
+
+        return false;
+    });
+}
+
+const filterMultiServers = (serverMulti) => {
+    const removeSameMulti=removeDuplicate(serverMulti,'host');
+    const selectActiveServer=removeSameMulti.filter(item=>{
+        if(item.status==='enable'){
+            return item
+        }
+    });
+    return selectActiveServer.map(item=>`${item.host}:${item.port}`)
+}
+
+
+const showMultiServerToPick =async (ctx,key) => {
+    const multiServers=await getMultiRequest(ctx);
+    if(multiServers && multiServers.length>0){
+        const list=filterMultiServers(multiServers).map(item=>{
+            return [
+                {text: `${item}`, callback_data: `${key}-${item.split(':')[0]}`},
+            ]
+        });
+        await ctx.reply('این عملیات روی کدام سرور انجام شود:',{
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {text: 'سرور اصلی', callback_data: `${key}-localhost`},
+                    ],
+                    ...list
+                ]
+            }
+        })
+    }else{
+        await ctx.reply('این عملیات روی کدام سرور انجام شود:',{
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {text: 'سرور اصلی', callback_data: `${key}-localhost`},
+                    ]
+                ]
+            }
+        })
+    }
+}
+
+
 module.exports={
-    querySerialize,responseHandler,urlEncode,generateMenu,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword,createAdmin,deleteAdminUser,changeMulti,getIPRequest,addMultiRequest,getMultiRequest
+    querySerialize,responseHandler,urlEncode,generateMenu,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword,createAdmin,deleteAdminUser,changeMulti,getIPRequest,addMultiRequest,getMultiRequest,removeDuplicate,filterMultiServers,showMultiServerToPick
 }

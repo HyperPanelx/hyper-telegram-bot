@@ -7,6 +7,7 @@ const {resetAllStates} = require("./states");
 const {resetAllAnswers} = require("./answers");
 const planModel=require('../models/Plan')
 const {bot} = require("../bot.config");
+const {nanoid} = require("nanoid");
 
 const problems = [
     {
@@ -24,7 +25,7 @@ const getPlanFromDB =async () => {
   const plans=await planModel.find({});
   return plans.map(item=>{
       return {
-          id:item.plan_id,
+          id:item._id,
           duration:item.duration,
           multi:item.multi,
           price:item.price
@@ -83,10 +84,14 @@ const generateCommands =async (ctx) => {
     await ctx.reply(`⚙️ منو کاربری:\nیک گزینه را انتخاب کنید.\n@${ctx.botInfo.username}`,{
       reply_markup:{
           inline_keyboard:[
-              [{text:' 📱 خرید اکانت',callback_data:'buy_account'}],
-              [{text:'📡 نمایش اکانت ها',callback_data:'show_account'}],
-              [{text:'💶 نمایش تراکنش های مالی',callback_data:'show_transactions'}],
-              [{text:'🎫 ارسال تیکت',callback_data:'send_ticket'}],
+              [
+                  {text:' 📱 خرید اکانت',callback_data:'buy_account'},
+                  {text:'📡 نمایش اکانت ها',callback_data:'show_account'}
+              ],
+              [
+                  {text:'💶 نمایش تراکنش های مالی',callback_data:'show_transactions'},
+                  {text:'🎫 ارسال تیکت',callback_data:'send_ticket'}
+              ],
               [{text:'👀 مشاهده تیکت ها',callback_data:'show_ticket'}],
           ]
       }
@@ -179,11 +184,13 @@ const getZarinToken =async () => {
     }
 }
 
-const getOrderData =  (planId,ip) => {
+const getOrderData =  (planId,ip,method) => {
   const data={
       plan:null,
-      server:null
+      server:null,
+      method:null
   };
+  data.method=method===1 ? 'paypal' : 'card_to_card';
   data.plan=shareData.plans.filter(item=>item.id==planId)[0];
   data.server=shareData.servers_list.filter(item=>item.ip.includes(ip))[0];
     return data
@@ -238,7 +245,7 @@ const transformPlanId = (source) => {
   return source.map(item=>{
       return {
           ...item,
-          plan_id:shareData.plans[item.plan_id-1]
+          plan_id:shareData.plans.filter(p1=>p1.id==item.plan_id)[0]
       }
   })
 }
@@ -246,7 +253,7 @@ const transformPlanId = (source) => {
 const extractPlan = (src) => {
   return {
       ...src,
-      plan:shareData.plans[src.plan_id-1]
+      plan:shareData.plans.filter(item=>item.id==src.plan_id)[0]
   }
 }
 
@@ -260,22 +267,35 @@ const createPayLink = (ctx,authority,order_id) => {
     const url=process.env.REDIRECT_URL;
     const serverIP=process.env.PRODUCTION == 1 ? invisibleServerIP(process.env.SERVER_IP) : 'localhost';
     const port=process.env.PORT
-    return [{text:`پرداخت`,url:url+`?authority=${authority}&server=${serverIP}&port=${port}&bot_name=${ctx.botInfo.username}&order_id=${order_id}`}]
+    return [{text:`پرداخت از طریق درگاه زرین پال`,url:url+`?authority=${authority}&server=${serverIP}&port=${port}&bot_name=${ctx.botInfo.username}&order_id=${order_id}`}]
 }
 
 
-const createOrder =async (ctx,duration,multi,price,order_id,authority,isActive) => {
+const createPaypalOrder =async (ctx,duration,multi,price,order_id,authority,isActive) => {
     const orderMessage=isActive ? '✅ شما در حال حاضر یک سفارش فعال دارید.\n در صورت تمایل به تغییر سفارش, آنرا لغو و سپس دوباره اقدام به خرید نمایید.\n' : '✅ سفارش شما با موفقیت ایجاد شد!\n';
     await ctx.reply(orderMessage+`🎫 شماره سفارش: ${order_id}\n⚡️ اطلاعات اکانت: ${duration} ماه - ${multi} کاربر همزمان - ${price} هزار تومان\n🚨 در انتظار پرداخت\n⚠️جهت پرداخت بهتر است فیلترشکن خود را خاموش نمایید.\n⚠️درگاه پرداخت تا ۱۵ دقیقه دیگر فعال است. در صورت غیرفعال شدن درگاه پرداخت, سفارش فعلی را لغو و سفارش جدید ایجاد کنید. `,{
         reply_markup:{
             inline_keyboard:[
                 createPayLink(ctx,authority,order_id),
-                isActive ? [{text:'لغو سفارش',callback_data:`cancel_order-${authority}`}] : []
+                isActive ? [{text:'لغو سفارش',callback_data:`cancel_order:${authority}`}] : []
             ]
         }
     })
 }
 
+const createCardToCardOrder = async (ctx,duration,multi,price,order_id,isActive) => {
+    const adminData=await adminModel.$where('this.card_info && this.card_info.number')
+
+    const orderMessage=isActive ? '✅ شما در حال حاضر یک سفارش فعال دارید.\n در صورت تمایل به تغییر سفارش, آنرا لغو و سپس دوباره اقدام به خرید نمایید.\n' : '✅ سفارش شما با موفقیت ایجاد شد!\n';
+    await ctx.reply(orderMessage+`🎫 شماره سفارش: ${order_id}\n⚡️ اطلاعات اکانت: ${duration} ماه - ${multi} کاربر همزمان - ${price} هزار تومان\n💳 شماره کارت جهت پرداخت: ${adminData[0].card_info.number} - ${adminData[0].card_info.name}\n⚠️ بررسی پرداخت ها ممکن است تا ۲۴ ساعت زمان ببرد.`,{
+        reply_markup:{
+            inline_keyboard:[
+                 [{text:'بررسی پرداخت',callback_data:`check_transaction:${order_id}`}],
+                 [{text:'لغو سفارش',callback_data:`cancel_order:${order_id}`}]
+            ]
+        }
+    })
+}
 const calculateExDate = (addMonth) => {
     //// calculate date
     const date=new Date();
@@ -293,7 +313,7 @@ const getServerDataByIP = async (ip) => {
 }
 
 
-const saveAccountToDB = async (bot_id,username,password,exdate,server,multi,ssh_port) => {
+const saveAccountToDB = async (bot_id,username,password,exdate,server,multi,ssh_port,target_multi) => {
   const userData=await userModel.findOne({bot_id:bot_id});
   if(userData){
       await userModel.findOneAndUpdate({bot_id:bot_id},{
@@ -303,6 +323,7 @@ const saveAccountToDB = async (bot_id,username,password,exdate,server,multi,ssh_
                   username:username,
                   password:password,
                   exdate:exdate,
+                  target_multi,
                   server,
                   multi,
                   ssh_port
@@ -313,13 +334,21 @@ const saveAccountToDB = async (bot_id,username,password,exdate,server,multi,ssh_
 
 }
 
-const sendAccountDataToTelegram = async (bot_id,username,password,multi,target_server,ssh_port,exdate) => {
-    const account= `👨🏼‍💼 نام کاربری: ${username}\n🗝 رمز عبور: ${password}\n📱 کاربر همزمان: ${multi}\n💻آی پی آدرس: ${target_server.split(':')[0]}\n🌐پورت: ${ssh_port || 22}\n📅 فعال تا تاریخ: ${exdate}`;
-    await bot.telegram.sendMessage(bot_id,'✅اکانت شما با موفقیت ساخته شد! \n\n'+account+'\n\n👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻\n آموزش اتصال اکانت ها در اندروید و  آیو اس:'+'\n @hyper_vpn_installation')
+const sendAccountDataToTelegram = async (bot_id,username,password,multi,target_server,ssh_port,exdate,target_multi) => {
+    if(target_multi==='localhost'){
+        const account= `👨🏼‍💼 نام کاربری:\n ${username}\n🗝 رمز عبور:\n ${password}\n📱 کاربر همزمان: ${multi}\n💻آی پی آدرس: ${target_server.split(':')[0]}\n🌐پورت: ${ssh_port || 22}\n📅 فعال تا تاریخ: ${exdate}`;
+        await bot.telegram.sendMessage(bot_id,'✅اکانت شما با موفقیت ساخته شد! \n\n'+account+'\n\n👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻\n آموزش اتصال اکانت ها در اندروید و  آیو اس:'+'\n @hyper_vpn_installation')
+    }else{
+        const account= `👨🏼‍💼 نام کاربری:\n ${username}\n🗝 رمز عبور:\n ${password}\n📱 کاربر همزمان: ${multi}\n💻آی پی آدرس: ${target_multi.split(':')[0]}\n🌐پورت: ${target_multi.split(':')[1]}\n📅 فعال تا تاریخ: ${exdate}`;
+        await bot.telegram.sendMessage(bot_id,'✅اکانت شما با موفقیت ساخته شد! \n\n'+account+'\n\n👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻👇🏻\n آموزش اتصال اکانت ها در اندروید و  آیو اس:'+'\n @hyper_vpn_installation')
+    }
+
 }
 
 const generateUser =async (transaction) => {
     const {bot_id,plan_id,target_server,target_multi}=transaction;
+    const userData=await userModel.findOne({bot_id});
+    const uniqueID=nanoid(7)
     //////
     const serverData=await getServerDataByIP(target_server);
     const plan=filterPlan(plan_id);
@@ -327,15 +356,16 @@ const generateUser =async (transaction) => {
     const exdate=calculateExDate(duration)
     const multi=Number(plan.multi)
     const query=querySerialize({
+        username:bot_id+'@'+uniqueID,
         multi:multi,
         exdate:exdate,
-        count:1,
-        server:target_multi,
+        telegram_id:bot_id+userData.tel_username,
+        phone:'09999999999',
+        server:target_multi==='localhost' ? 'localhost' : target_multi.split(':')[0],
     });
 
     try {
-        const request=await f(`http://${target_server}/user-gen?`+query,{
-            method:'POST',
+        const request=await f(`http://${target_server}/user-add?`+query,{
             headers:{
                 'Content-Type':'application/json',
                 Authorization:`Bearer ${serverData.token}`
@@ -343,10 +373,10 @@ const generateUser =async (transaction) => {
         });
         const response=await request.json();
         if(response.success){
-            const username=response.data[0].user;
-            const password=response.data[0].passwd;
-            await saveAccountToDB(bot_id,username,password,exdate,target_server,multi,serverData.ssh_port);
-            await sendAccountDataToTelegram(bot_id,username,password,multi,target_server,serverData.ssh_port,exdate);
+            const username=response.data.username;
+            const password=response.data.password;
+            await saveAccountToDB(bot_id,username,password,exdate,target_server,multi,serverData.ssh_port,target_multi);
+            await sendAccountDataToTelegram(bot_id,username,password,multi,target_server,serverData.ssh_port,exdate,target_multi);
         }else{
             return false
         }
@@ -362,6 +392,9 @@ const sendTransactionStatus = async (transaction,ref_id,card_num,isSuccess) => {
   await bot.telegram.sendMessage(transaction.bot_id,statusMessage+`👜 شماره سفارش: ${transaction.order_id}\n🏆 اطلاعات اکانت: ${plan.duration} ماه - ${plan.multi} کاربر همزمان\n💴 مبلغ قابل پرداخت: ${plan.price} هزارتومان\n🔑 کد رهگیری زرین پال : ${ref_id || ''}\n❔ وضعیت سفارش: ${isSuccess ? 'موفق' : 'ناموفق'}\n💳 شماره کارت: ${card_num || ''}`)
 }
 
+
+
+
 module.exports={
-    querySerialize,responseHandler,generateCommands,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan,createPayLink,createOrder,filterPlan,generateUser,queryValidation,invisibleServerIP,removeDuplicate,getPlanFromDB,problems,sendTransactionStatus
+    querySerialize,responseHandler,generateCommands,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan,createPayLink,filterPlan,generateUser,queryValidation,invisibleServerIP,removeDuplicate,getPlanFromDB,problems,sendTransactionStatus,createPaypalOrder,createCardToCardOrder
 }

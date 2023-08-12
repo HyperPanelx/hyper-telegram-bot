@@ -25,13 +25,13 @@ const transactionSchema=mongoose.Schema({
     },
     transaction_id:{
         type:String,
-        required:true,
+        required:false,
         trim:true,
-        minLength:2,
+        minLength:0,
         maxLength:200,
     },
     plan_id:{
-        type:Number,
+        type:String,
         required:true,
         trim:true,
         minLength:1,
@@ -86,6 +86,17 @@ const transactionSchema=mongoose.Schema({
         minLength:0,
         maxLength:200,
     },
+    payment_mode:{
+        type:String,
+        required:false,
+        trim:true,
+        minLength:0,
+        maxLength:200,
+    },
+    is_submitted:{
+        type:Boolean,
+        required:false,
+    }
 
 })
 

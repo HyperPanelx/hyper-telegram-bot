@@ -1,5 +1,5 @@
 const {bot} = require("../bot.config");
-const {generateMenu, getMe} = require("../utils/utils");
+const {generateMenu, getMe, getMultiRequest, removeDuplicate,filterMultiServers} = require("../utils/utils");
 const {getFiveQuestionState, getOneQuestionState, getThreeQuestionState} = require("../utils/states");
 const adminModel = require("../models/Admin");
 const {getThreeAnswersState} = require("../utils/answers");
@@ -7,13 +7,20 @@ const {resetServerData, getServerData} = require("../utils/addServer");
 
 
 bot.action('select_server',async (ctx)=>{
-    const getAdminData=await adminModel.findOne({bot_id:ctx.from.id});
-    const {ip,token}=getAdminData.server;
+    await ctx.reply('در حال دریافت اطلاعات سرور.لطفا چند لحظه صبر کنید...')
+    const adminData=await adminModel.findOne({bot_id:ctx.from.id});
+    const {ip,token}=adminData.server;
     const isTokenValid=await getMe(ip,token);
     if(isTokenValid){
         const serverDataState=getServerData(ctx.chat.id)
         serverDataState.ip=ip;
         serverDataState.token=token;
+        //// get server multi
+        const serverMulti=await getMultiRequest(ctx)
+        if(serverMulti && serverMulti.length>0){
+            adminData.multi=filterMultiServers(serverMulti)
+            await adminData.save()
+        }
         await generateMenu(ctx)
     }else {
         await ctx.reply(`❌ توکن صادر شده توسط سرور منقضی شده است. شما احتیاج به احرازهویت مجدد برای استفاده از منابع این سرور دارید.`, {
@@ -74,7 +81,7 @@ bot.action('start_authentication',async ctx=>{
 })
 
 bot.action('remove_server',async ctx=>{
-    await adminModel.findOneAndUpdate({bot_id:ctx.from.id},{server:{}});
+    await adminModel.findOneAndUpdate({bot_id:ctx.from.id},{server:{},multi:[]});
     resetServerData(ctx.chat.id)
     ctx.reply('✅ سرور با موفقیت حذف شد! کامند start/ را جهت ادامه کار وارد نمایید. ')
 })

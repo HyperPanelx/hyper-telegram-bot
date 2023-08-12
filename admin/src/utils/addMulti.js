@@ -30,7 +30,7 @@ const addMultiServerProcess = async (ctx,txt) => {
         fourAnswerState.fourth=txt;
         // request
         const adminData=await adminModel.findOne({bot_id:ctx.from.id});
-        const isExist=adminData.multi.some(item=>item===fourAnswerState.first);
+        const isExist=adminData.multi.some(item=>item.includes(fourAnswerState.first));
         if(isExist){
             await ctx.reply('❌ یک سرور با همین آی پی قبلا ثبت شده است.',{
                 reply_markup: {
@@ -42,7 +42,7 @@ const addMultiServerProcess = async (ctx,txt) => {
         }else{
             const isAdded=await addMultiRequest(ctx,fourAnswerState.first,fourAnswerState.second,fourAnswerState.third,fourAnswerState.fourth)
             if(isAdded){
-                adminData.multi.push(fourAnswerState.first)
+                adminData.multi.push(`${fourAnswerState.first}:${fourAnswerState.fourth}`)
                 adminData.save()
                 await ctx.reply('✅ سرور با موفقیت اضافه شد.',{
                     reply_markup: {

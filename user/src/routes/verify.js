@@ -15,7 +15,7 @@ router.post('/',query(['authority','status']).notEmpty(),async (req,res)=>{
     const result = await validationResult(req);
     if(result.isEmpty()) {
         const query = matchedData(req);
-        const getTransaction=await transactionModel.findOne({transaction_id:query.authority,payment_status:'waiting payment'});
+        const getTransaction=await transactionModel.findOne({transaction_id:query.authority,payment_status:'waiting payment',payment_mode:'paypal'});
         if(getTransaction){
             /// payment successful
             f(process.env.ZARIN_PAY_VERIFY,{

@@ -1,5 +1,23 @@
 const mongoose=require('mongoose')
 
+
+const cardInfoSchema=mongoose.Schema({
+    number:{
+        type:String,
+        required:true,
+        trim:true,
+        minLength:1,
+        maxLength:200
+    },
+    name:{
+        type:String,
+        required:true,
+        trim:true,
+        minLength:1,
+        maxLength:200
+    }
+})
+
 const serverSchema=mongoose.Schema({
     ip:{
         type:String,
@@ -60,6 +78,10 @@ const adminSchema=mongoose.Schema({
         required:false,
         minLength:0,
         maxLength:200
+    },
+    card_info:{
+        type:cardInfoSchema,
+        required:false,
     }
 
 })

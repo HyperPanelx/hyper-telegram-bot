@@ -75,7 +75,7 @@ const addServerProcess = async (ctx,txt) => {
         fiveQuestionState.fifth=false
         // api port
         fiveAnswerState.fourth=txt
-        await ctx.reply('پورت ssh  را وارد نمایید:\n⚠️نکته:  در صورت اشتباه بودن این مقدار کاربران با مشکل مواجد خواهند شد.')
+        await ctx.reply('پورت ssh  را وارد نمایید:\n⚠️نکته:  در صورت اشتباه بودن این مقدار کاربران با مشکل مواجه خواهند شد.')
 
     }else if(fiveAnswerState.first && fiveAnswerState.second && fiveAnswerState.third && fiveAnswerState.fourth && !fiveQuestionState.first && !fiveQuestionState.second && !fiveQuestionState.third && !fiveQuestionState.fourth && !fiveQuestionState.fifth){
         /// ssh port

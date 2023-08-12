@@ -13,7 +13,7 @@ router.post('/',query(['authority','order_id']).notEmpty(),async (req,res)=>{
     const result = await validationResult(req);
     if(result.isEmpty()) {
         const query = matchedData(req);
-        const getTransaction=await transactionModel.findOne({transaction_id:query.authority,order_id:query.order_id,payment_status:'waiting payment'});
+        const getTransaction=await transactionModel.findOne({transaction_id:query.authority,order_id:query.order_id,payment_status:'waiting payment',payment_mode:'paypal'});
         if(getTransaction){
             res.status(200).send(responseHandler(false,null,{
                 pay_amount:getTransaction.pay_amount,

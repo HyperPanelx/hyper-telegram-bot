@@ -1,4 +1,4 @@
-const {generateUser,getMultiRequest}=require('./utils')
+const {generateUser,getMultiRequest,filterMultiServers,showMultiServerToPick}=require('./utils')
 const {resetAllStates, getThreeQuestionState, getFourQuestionState} = require("./states");
 const {resetAllAnswers, getThreeAnswersState, getFourAnswersState} = require("./answers");
 const {bot} = require("../bot.config");
@@ -22,45 +22,14 @@ const generateUserProcess = async (ctx,txt) => {
         fourQuestionState.fourth=false;
         /// count
         fourAnswerState.third=txt
-        ctx.reply('لطفا چند لحظه صبر کنید...')
-        const multiServers=await getMultiRequest(ctx);
-        if(multiServers){
-            const list=multiServers.map(item=>{
-                return [
-                    {text: `${item.host}`, callback_data: `select_multi-${item.host}`},
-                ]
-            })
-            await ctx.reply('این اکانت روی کدام سرور ایجاد شود؟',{
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            {text: 'سرور اصلی', callback_data: 'select_multi-localhost'},
-                        ],
-                        ...list
-                    ]
-                }
-            })
-        }else{
-            await ctx.reply('این اکانت روی کدام سرور ایجاد شود؟',{
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            {text: 'سرور اصلی', callback_data: 'select_multi-localhost'},
-                        ]
-                    ]
-                }
-            })
-        }
-
-
-
-
+        ctx.reply('لطفا چند لحظه صبر کنید...');
+        await showMultiServerToPick(ctx,'gen_select_multi')
     }
 }
 
 
 
-bot.action(/select_multi/g,async (ctx)=>{
+bot.action(/gen_select_multi/g,async (ctx)=>{
     const ip=ctx.match['input'].split('-')[1];
     const fourQuestionState=getFourQuestionState(ctx.chat.id);
     const fourAnswerState=getFourAnswersState(ctx.chat.id);

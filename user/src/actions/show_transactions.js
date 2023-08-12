@@ -8,7 +8,7 @@ bot.action('show_transactions',async (ctx)=>{
         if(allTransactions.length>0){
             const data=transformPlanId(allTransactions)
             const transfered_data=data.map(item=>{
-                return `👜 شماره سفارش: ${item._doc.order_id}\n🏆 اطلاعات اکانت: ${item.plan_id.duration} ماه - ${item.plan_id.multi} کاربر همزمان\n💴 مبلغ قابل پرداخت: ${item.plan_id.price} هزار تومان\n🎖 کد رهگیری زرین پال: ${item._doc?.ref_id || ''}\n❔ وضعیت پرداخت: ${item._doc.payment_status==='success' ? 'موفق' :item._doc.payment_status==='failed'?'ناموفق' : 'در انتظار پرداخت'}\n💳 شماره کارت: ${item?._doc?.card_num || ''}`
+                return `👜 شماره سفارش: ${item._doc.order_id}\n🏆 اطلاعات اکانت: ${item.plan_id.duration} ماه - ${item.plan_id.multi} کاربر همزمان\n💴 مبلغ قابل پرداخت: ${item.plan_id.price} هزار تومان\n🎖 کد رهگیری زرین پال: ${item._doc?.ref_id || ''}\n❔ وضعیت پرداخت: ${item._doc.payment_status==='success' ? 'موفق' :item._doc.payment_status==='failed'?'ناموفق' : 'در انتظار پرداخت'}\n💳 شماره کارت: ${item?._doc?.card_num || ''}\n 🏓 روش پرداخت: ${item?._doc?.payment_mode==='card_to_card'? 'کارت به کارت' :'درگاه پرداخت'}`
             }).join('\n<-------------------------------->\n');
             await ctx.reply('✅ تراکنش های شما به شرح زیر است:\n'+transfered_data);
             await generateCommands(ctx);

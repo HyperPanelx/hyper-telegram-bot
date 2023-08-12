@@ -2,13 +2,6 @@ const mongoose=require('mongoose');
 
 
 const planSchema=mongoose.Schema({
-    plan_id:{
-        type:Number,
-        required:true,
-        trim:true,
-        minLength:1,
-        maxLength:200
-    },
     duration:{
         type:Number,
         required:true,
