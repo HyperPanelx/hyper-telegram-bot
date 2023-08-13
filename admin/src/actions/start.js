@@ -1,5 +1,5 @@
 const {bot} = require("../bot.config");
-const {generateMenu, getMe, getMultiRequest, removeDuplicate,filterMultiServers} = require("../utils/utils");
+const {generateMenu, getMe, getMultiRequest, removeDuplicate,filterMultiServers,transactionNotification} = require("../utils/utils");
 const {getFiveQuestionState, getOneQuestionState, getThreeQuestionState} = require("../utils/states");
 const adminModel = require("../models/Admin");
 const {getThreeAnswersState} = require("../utils/answers");
@@ -21,6 +21,7 @@ bot.action('select_server',async (ctx)=>{
             adminData.multi=filterMultiServers(serverMulti)
             await adminData.save()
         }
+        await transactionNotification(ctx)
         await generateMenu(ctx)
     }else {
         await ctx.reply(`❌ توکن صادر شده توسط سرور منقضی شده است. شما احتیاج به احرازهویت مجدد برای استفاده از منابع این سرور دارید.`, {

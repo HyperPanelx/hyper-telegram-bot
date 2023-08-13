@@ -1,8 +1,9 @@
 const {bot} = require("../bot.config");
 const {queryValidation, getOrderData, getPlans,createPaypalOrder,createCardToCardOrder} = require("../utils/utils");
 const transactionModel = require("../models/Transaction");
-const {getTwoQuestionState, getThreeQuestionState} = require("../utils/states");
+const { getThreeQuestionState} = require("../utils/states");
 const {SelectPlanProcess, selectServersProcess,selectPaymentMethod} = require("../utils/buyAccount");
+const {getThreeAnswersState} = require("../utils/answers");
 
 bot.action('buy_account',async (ctx)=>{
     await queryValidation(async ()=>{
@@ -35,7 +36,7 @@ bot.action(/^select_plan/,async (ctx)=>{
         if(threeQuestionState.key==='buy_account' &&  threeQuestionState.first) {
             await SelectPlanProcess(ctx,plan_id);
         }
-    })
+    },ctx,false,true)
 
 })
 
@@ -46,7 +47,7 @@ bot.action(/^select_server/,async (ctx)=>{
         if(threeQuestionState.key==='buy_account' &&   threeQuestionState.second) {
             await selectServersProcess(ctx,ip);
         }
-    })
+    },ctx,false,true)
 
 })
 
@@ -58,5 +59,24 @@ bot.action(/^select_method/,async (ctx)=>{
         if(threeQuestionState.key==='buy_account' &&   threeQuestionState.third) {
             await selectPaymentMethod(ctx,id)
         }
-    })
+    },ctx,false,false)
+})
+
+
+bot.action(/^send_card/,async ctx=>{
+    await queryValidation(async ()=>{
+        const transaction_id=ctx.match['input'].split(':')[1];
+        const getTransactionData=await transactionModel.findOne({order_id:transaction_id})
+        if(getTransactionData.card_num.length>0 && getTransactionData.card_name.length>0){
+            await ctx.reply('🚫 اطلاعات پرداخت این تراکنش قبلا ثبت شده است. لطفا کمی صبور باشید.')
+        }else{
+            const threeQuestionState=getThreeQuestionState(ctx.chat.id);
+            const threeAnswersState=getThreeAnswersState(ctx.chat.id);
+            threeQuestionState.key='send_card'
+            threeQuestionState.second=true
+            threeQuestionState.third=true
+            threeAnswersState.first=transaction_id;
+            await ctx.reply('لطفا شماره کارت پرداخت کننده را وارد نمایید:')
+        }
+    },ctx,true,false)
 })

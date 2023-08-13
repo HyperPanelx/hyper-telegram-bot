@@ -111,9 +111,9 @@ const selectPaymentMethod = async (ctx,id) => {
             payment_status:'waiting payment',
             created_at:date.toLocaleString(),
             updated_at:date.toLocaleString(),
-            is_submitted:false,
+            submit_stage:0,
             card_num:'',
-            ref_id:''
+            card_name:'',
         });
         newTransaction.save().then(async ()=>{
             await createCardToCardOrder(ctx,order_data.plan.duration,order_data.plan.multi,order_data.plan.price,order_id,false)

@@ -65,6 +65,13 @@ const transactionSchema=mongoose.Schema({
         minLength:0,
         maxLength:200,
     },
+    card_name:{
+        type:String,
+        required:false,
+        trim:true,
+        minLength:0,
+        maxLength:200,
+    },
     ref_id:{
         type:String,
         required:false,
@@ -93,8 +100,11 @@ const transactionSchema=mongoose.Schema({
         minLength:0,
         maxLength:200,
     },
-    is_submitted:{
-        type:Boolean,
+    /// 0 waiting
+    /// 1 ok
+    /// 2 nok
+    submit_stage:{
+        type:Number,
         required:false,
     }
 

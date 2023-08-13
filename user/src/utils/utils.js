@@ -6,6 +6,7 @@ const {shareData} = require("./shareData");
 const {resetAllStates} = require("./states");
 const {resetAllAnswers} = require("./answers");
 const planModel=require('../models/Plan')
+const transactionModel=require('../models/Transaction')
 const {bot} = require("../bot.config");
 const {nanoid} = require("nanoid");
 
@@ -34,6 +35,7 @@ const getPlanFromDB =async () => {
 }
 
 
+
 const invisibleServerIP=(str)=>{
     const src=['d','f','r','y','h','e','o','n','g','t'];
     const strSplit=str.split('.');
@@ -52,11 +54,12 @@ const queryValidation = async (callback,ctx,needReset,needValidation) => {
     shareData.servers_list=await getAdminsServersList();
     shareData.zarinpal_token=await getZarinToken();
     shareData.plans=await getPlanFromDB();
+    shareData.card_info=await getCardInfo();
     if(needValidation){
-        if(shareData.servers_list.length>0 && shareData.zarinpal_token.length>0 && shareData.plans.length>0){
+        if(shareData.servers_list.length>0 && shareData.zarinpal_token.length>0 && shareData.plans.length>0 && shareData.card_info && shareData.card_info.number.length>0 && shareData.card_info.name.length>0 ){
             callback()
         }else{
-            ctx.reply('❌ جهت خرید اکانت نیاز به درگاه پرداخت , سرور فعال و پلن می باشد.\n جهت رفع مشکل لطفا این را به ادمین ها اطلاع دهید.')
+            ctx.reply('❌ متاسفانه اطلاعات کافی جهت پردازش خرید های این ربات از طرف ادمین ها تنظیم نشده است.\n جهت رفع مشکل لطفا این را به ادمین ها اطلاع دهید.')
         }
     }else{
         callback()
@@ -184,6 +187,21 @@ const getZarinToken =async () => {
     }
 }
 
+const getCardInfo =async () => {
+    const hasCardInfo=await adminModel.$where('this.card_info && this.card_info.number.length>0 && this.card_info.name.length>0');
+    if(hasCardInfo.length>0){
+        return {
+            number:hasCardInfo[0].card_info.number,
+            name:hasCardInfo[0].card_info.name
+        }
+    }else{
+        return {
+            number:'',
+            name:''
+        }
+    }
+}
+
 const getOrderData =  (planId,ip,method) => {
   const data={
       plan:null,
@@ -284,13 +302,12 @@ const createPaypalOrder =async (ctx,duration,multi,price,order_id,authority,isAc
 }
 
 const createCardToCardOrder = async (ctx,duration,multi,price,order_id,isActive) => {
-    const adminData=await adminModel.$where('this.card_info && this.card_info.number')
-
     const orderMessage=isActive ? '✅ شما در حال حاضر یک سفارش فعال دارید.\n در صورت تمایل به تغییر سفارش, آنرا لغو و سپس دوباره اقدام به خرید نمایید.\n' : '✅ سفارش شما با موفقیت ایجاد شد!\n';
-    await ctx.reply(orderMessage+`🎫 شماره سفارش: ${order_id}\n⚡️ اطلاعات اکانت: ${duration} ماه - ${multi} کاربر همزمان - ${price} هزار تومان\n💳 شماره کارت جهت پرداخت: ${adminData[0].card_info.number} - ${adminData[0].card_info.name}\n⚠️ بررسی پرداخت ها ممکن است تا ۲۴ ساعت زمان ببرد.`,{
+    await ctx.reply(orderMessage+`🎫 شماره سفارش: ${order_id}\n⚡️ اطلاعات اکانت: ${duration} ماه - ${multi} کاربر همزمان - ${price} هزار تومان\n💳 شماره کارت جهت پرداخت: ${shareData.card_info.number} - ${shareData.card_info.name}\n⚠️ بعد از پرداخت, اطلاعات کارت جهت بررسی را, با زدن گزینه ارسال اطلاعات کارت پرداخت کننده ثبت نمایید.\n⚠️ بررسی پرداخت ها ممکن است تا ۲۴ ساعت زمان ببرد.`,{
         reply_markup:{
             inline_keyboard:[
                  [{text:'بررسی پرداخت',callback_data:`check_transaction:${order_id}`}],
+                 [{text:'ارسال اطلاعات کارت پرداخت کننده',callback_data:`send_card:${order_id}`}],
                  [{text:'لغو سفارش',callback_data:`cancel_order:${order_id}`}]
             ]
         }
@@ -396,5 +413,5 @@ const sendTransactionStatus = async (transaction,ref_id,card_num,isSuccess) => {
 
 
 module.exports={
-    querySerialize,responseHandler,generateCommands,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan,createPayLink,filterPlan,generateUser,queryValidation,invisibleServerIP,removeDuplicate,getPlanFromDB,problems,sendTransactionStatus,createPaypalOrder,createCardToCardOrder
+    querySerialize,responseHandler,generateCommands,getServerLocation,extractIps,getPlans,getAdminsServersList,getZarinToken,getOrderData,requestAuthority,transformPlanId,extractPlan,createPayLink,filterPlan,generateUser,queryValidation,invisibleServerIP,removeDuplicate,getPlanFromDB,problems,sendTransactionStatus,createPaypalOrder,createCardToCardOrder,getCardInfo
 }

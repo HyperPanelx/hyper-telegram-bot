@@ -3,7 +3,11 @@
 const shareData={
     servers_list:[],
     zarinpal_token:'',
-    plans:[]
+    plans:[],
+    card_info:{
+        number:'',
+        name:''
+    }
 }
 
 

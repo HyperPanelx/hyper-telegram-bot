@@ -5,6 +5,7 @@ const {resetAllStates}=require('./states')
 const {resetAllAnswers}=require('./answers')
 const {getServerData}=require('./addServer')
 const {bot} = require("../bot.config");
+const transactionModel = require("../models/Transaction");
 
 
 
@@ -91,11 +92,23 @@ const getMe = async (ip,token) => {
                     {text:'✍پاسخ به تیکت',callback_data: 'answer_ticket'}
                 ],
                 [
-                    {text:'🗑حذف سرور',callback_data: 'remove_server'}
+                    {text:'🕔 تراکنش های در انتظار بررسی',callback_data: 'show_waiting_payment'},
+                    {text:'🏧 اضافه کردن کارت بانکی',callback_data: 'add_card_info'},
+                ],
+                [
+                    {text:'🗑حذف سرور',callback_data: 'remove_server'},
                 ],
             ],
         }
     })
+}
+
+const transactionNotification =async (ctx) => {
+    const getTransaction=await transactionModel.find({submit_stage:0,payment_status:'waiting payment',payment_mode:'card_to_card'}).$where('this.card_num.length>0 && this.card_name.length>0');
+    if(getTransaction.length>0){
+        await ctx.reply(`⚠️ تعداد ${getTransaction.length} تراکنش جهت بررسی وجود دارد. با انتخاب نمایش تراکنش های در انتظار بررسی اقدام نمایید.`)
+    }
+
 }
 
 
@@ -105,6 +118,7 @@ const commandValidation =async (callback,ctx) => {
   if(serverDataState.ip && serverDataState.token){
       resetAllAnswers(ctx.chat.id);
       resetAllStates(ctx.chat.id);
+      await transactionNotification(ctx)
       callback()
   }else{
       if(adminData.server.ip && adminData.server.ssh_port){
@@ -465,5 +479,5 @@ const showMultiServerToPick =async (ctx,key) => {
 
 
 module.exports={
-    querySerialize,responseHandler,urlEncode,generateMenu,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword,createAdmin,deleteAdminUser,changeMulti,getIPRequest,addMultiRequest,getMultiRequest,removeDuplicate,filterMultiServers,showMultiServerToPick
+    querySerialize,responseHandler,urlEncode,generateMenu,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword,createAdmin,deleteAdminUser,changeMulti,getIPRequest,addMultiRequest,getMultiRequest,removeDuplicate,filterMultiServers,showMultiServerToPick,transactionNotification
 }

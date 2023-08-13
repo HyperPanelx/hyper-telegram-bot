@@ -22,6 +22,7 @@ const {startAuthProcess}=require('../utils/startAuth');
 const {answerTicketProcess}=require('../utils/answerTicket');
 const {getTransactionProcess}=require('../utils/getTransaction');
 const {addMultiServerProcess}=require('../utils/addMulti')
+const {addCardProcess}=require('../utils/addCardInfo')
 ///////////
 
 bot.command('start', async ctx => {
@@ -99,6 +100,7 @@ bot.on('message',  async (ctx) =>{
     oneQuestionState.key==='delete_user' && await deleteUserProcess(ctx,txt);
     oneQuestionState.key==='get_transaction' && await getTransactionProcess(ctx,txt);
     twoQuestionState.key==='answer_ticket' && await answerTicketProcess(ctx,txt);
+    twoQuestionState.key==='add_card_info' && await addCardProcess(ctx,txt);
     oneQuestionState.key==='unlock' && await unlockUserProcess(ctx,txt);
     oneQuestionState.key==='lock' && await lockUserProcess(ctx,txt);
     twoQuestionState.key==='reset_password' && await resetUserPassProcess(ctx,txt);
