@@ -4,6 +4,7 @@ const {commandValidation,getOnlineUsersList,showMultiServerToPick}=require('../u
 
 bot.action('online_list',async (ctx)=>{
     await commandValidation(async ()=>{
+        await ctx.reply('در حال دریافت اطلاعات سرور. چند لحظه صبر کنید...')
         await showMultiServerToPick(ctx,'online_multi_select')
     },ctx)
 })

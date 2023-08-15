@@ -96,6 +96,7 @@ const getMe = async (ip,token) => {
                     {text:'🏧 اضافه کردن کارت بانکی',callback_data: 'add_card_info'},
                 ],
                 [
+                    {text:'💡 تمدید کاربر',callback_data: 'renew_user'},
                     {text:'🗑حذف سرور',callback_data: 'remove_server'},
                 ],
             ],
@@ -417,7 +418,25 @@ const getMultiRequest=async (ctx)=>{
     }
 
 }
+const renewUserRequest=async (ctx,username,exdate)=>{
+    const serverDataState=getServerData(ctx.chat.id)
+    const query=querySerialize({
+        username,exdate
+    })
+    try {
+        const request=await f(`http://${serverDataState.ip}/user-renew?`+query,{
+            headers:{
+                'Content-Type':'application/json',
+                Authorization:`Bearer ${serverDataState.token}`
+            },
+        })
+        const response=await request.json();
+        return !!response.success
+    }catch (err) {
+        return false
+    }
 
+}
 
 
 const removeDuplicate = (arr,key) => {
@@ -436,13 +455,14 @@ const removeDuplicate = (arr,key) => {
 }
 
 const filterMultiServers = (serverMulti) => {
-    const removeSameMulti=removeDuplicate(serverMulti,'host');
-    const selectActiveServer=removeSameMulti.filter(item=>{
+    
+    const selectActiveServer=serverMulti.filter(item=>{
         if(item.status==='enable'){
             return item
         }
     });
-    return selectActiveServer.map(item=>`${item.host}:${item.port}`)
+   const removeSameMulti=removeDuplicate(selectActiveServer,'host');
+    return removeSameMulti.map(item=>`${item.host}:${item.port}`)
 }
 
 
@@ -479,5 +499,5 @@ const showMultiServerToPick =async (ctx,key) => {
 
 
 module.exports={
-    querySerialize,responseHandler,urlEncode,generateMenu,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword,createAdmin,deleteAdminUser,changeMulti,getIPRequest,addMultiRequest,getMultiRequest,removeDuplicate,filterMultiServers,showMultiServerToPick,transactionNotification
+    querySerialize,responseHandler,urlEncode,generateMenu,getMe,commandValidation,getUsersList,getOnlineUsersList,generateUser,deleteUser,unlockUser,lockUser,resetPassword,createAdmin,deleteAdminUser,changeMulti,getIPRequest,addMultiRequest,getMultiRequest,removeDuplicate,filterMultiServers,showMultiServerToPick,transactionNotification,renewUserRequest
 }

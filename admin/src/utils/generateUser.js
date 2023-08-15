@@ -22,7 +22,7 @@ const generateUserProcess = async (ctx,txt) => {
         fourQuestionState.fourth=false;
         /// count
         fourAnswerState.third=txt
-        ctx.reply('لطفا چند لحظه صبر کنید...');
+        await ctx.reply('در حال دریافت اطلاعات سرور. چند لحظه صبر کنید...')
         await showMultiServerToPick(ctx,'gen_select_multi')
     }
 }
